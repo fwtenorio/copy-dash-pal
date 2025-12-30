@@ -1,0 +1,409 @@
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  CheckCircle,
+  AlertTriangle,
+  Clock,
+  Package,
+  MapPin,
+  Truck,
+} from "lucide-react";
+
+// Tipo Order importado do ResolutionHub (deve ser compatível)
+type OrderStatus = "delivered" | "in_transit" | "cancelled" | "refunded" | "pending";
+
+type Order = {
+  orderNumber?: string;
+  email: string;
+  customerName: string;
+  status: OrderStatus;
+  orderDate?: string;
+  totalAmount?: string;
+  shippingAddress?: string;
+  address?: string;
+  carrier?: string;
+  trackingNumber?: string;
+  trackingUrl?: string;
+  trackingCode?: string;
+  deliveryDate?: string;
+  deliveryTime?: string; // Timestamp ISO completo com hora (formato 17track)
+  items: Array<{
+    name: string;
+    quantity: number;
+    price?: string | number;
+    image?: string;
+  }>;
+  id?: string;
+  createdAt?: string;
+  total?: number;
+  currency?: string;
+  subtotal?: number;
+  shippingCost?: number;
+  discount?: number;
+};
+
+type Step = 1 | 2;
+
+interface ItemNotReceivedFlowProps {
+  order: Order; // Recebe o order do ResolutionHub
+  onClose?: () => void;
+  onComplete?: () => void;
+  primaryColor?: string;
+  primaryTextColor?: string;
+}
+
+export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
+  order,
+  onClose,
+  onComplete,
+  primaryColor = "#1B966C",
+  primaryTextColor = "#FFFFFF",
+}) => {
+  const [step, setStep] = useState<Step>(1);
+  const [checkboxes, setCheckboxes] = useState({
+    neighbors: false,
+    reception: false,
+    mailbox: false,
+  });
+
+  // Verificar se todos os checkboxes estão marcados
+  const allCheckboxesChecked =
+    checkboxes.neighbors && checkboxes.reception && checkboxes.mailbox;
+
+  const handleCheckboxChange = (key: keyof typeof checkboxes) => {
+    setCheckboxes((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
+  // Helper function to format delivery date/time (17track format)
+  const formatDeliveryDateTime = (): string => {
+    // Priority: deliveryTime (full timestamp) > deliveryDate (date only)
+    if (order.deliveryTime) {
+      // Format ISO timestamp to readable English format
+      try {
+        const date = new Date(order.deliveryTime);
+        const formattedDate = date.toLocaleDateString("en-US", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        });
+        const formattedTime = date.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        return `${formattedDate} at ${formattedTime}`;
+      } catch (e) {
+        // Fallback if parsing fails
+        return order.deliveryTime;
+      }
+    }
+    if (order.deliveryDate) {
+      return order.deliveryDate;
+    }
+    if (order.orderDate) {
+      return order.orderDate;
+    }
+    return "Date not available";
+  };
+
+  // Helper function to get delivery location
+  const getDeliveryLocation = (): string => {
+    // Try to extract city/state from shipping address
+    if (order.shippingAddress) {
+      const parts = order.shippingAddress.split(" - ");
+      if (parts.length >= 2) {
+        return parts[parts.length - 2] || "Delivery address";
+      }
+      return order.shippingAddress;
+    }
+    if (order.address) {
+      return order.address;
+    }
+    return "Delivery address";
+  };
+
+  // SCREEN: Expectation Management (for in_transit status)
+  const renderExpectationManagement = () => (
+    <div className="space-y-6 animate-in fade-in-50 duration-300">
+      <div className="flex items-center justify-center">
+        <div className="rounded-full p-4 bg-blue-100">
+          <Truck className="h-12 w-12 text-blue-600" />
+        </div>
+      </div>
+
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-semibold text-gray-900">
+          Your order is on the way.
+        </h2>
+        <p className="text-gray-600">
+          The original estimate is still valid. Sometimes there are small delays in sorting.
+        </p>
+      </div>
+
+      <Button
+        className="w-full h-11 shadow-sm hover:shadow-md transition-all"
+        style={{
+          backgroundColor: primaryColor,
+          color: primaryTextColor,
+        }}
+        onClick={() => {
+          if (onClose) onClose();
+        }}
+      >
+        Got it, I'll wait
+      </Button>
+    </div>
+  );
+
+  // STEP 1: Authority Check (refatorado com nova UI)
+  const renderAuthorityCheck = () => null;
+
+  // STEP 2: Friction Modal
+  const renderStep2 = () => (
+    <div className="space-y-6 animate-in fade-in-50 duration-300">
+      <div className="flex items-center justify-center">
+        <div className="rounded-full p-4 bg-yellow-100">
+          <AlertTriangle className="h-12 w-12 text-yellow-600" />
+        </div>
+      </div>
+
+      <div className="text-center space-y-2">
+        <h2 className="text-2xl font-semibold text-gray-900">
+          Before continuing
+        </h2>
+        <p className="text-gray-600">
+          Please check the following locations before proceeding:
+        </p>
+      </div>
+
+      <Card className="border-yellow-200 bg-yellow-50 shadow-sm">
+        <CardContent className="pt-6">
+          <div className="space-y-4">
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <Checkbox
+                checked={checkboxes.neighbors}
+                onCheckedChange={() => handleCheckboxChange("neighbors")}
+                className="mt-0.5"
+              />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900">
+                  I checked with neighbors
+                </p>
+                <p className="text-xs text-gray-600 mt-0.5">
+                  The product may have been delivered to a nearby address
+                </p>
+              </div>
+            </label>
+
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <Checkbox
+                checked={checkboxes.reception}
+                onCheckedChange={() => handleCheckboxChange("reception")}
+                className="mt-0.5"
+              />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900">
+                  I checked at reception/concierge
+                </p>
+                <p className="text-xs text-gray-600 mt-0.5">
+                  The product may be stored at the building's reception
+                </p>
+              </div>
+            </label>
+
+            <label className="flex items-start gap-3 cursor-pointer group">
+              <Checkbox
+                checked={checkboxes.mailbox}
+                onCheckedChange={() => handleCheckboxChange("mailbox")}
+                className="mt-0.5"
+              />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900">
+                  I checked the mailbox
+                </p>
+                <p className="text-xs text-gray-600 mt-0.5">
+                  Small products may have been left in the mailbox
+                </p>
+              </div>
+            </label>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Button
+        className="w-full h-12 shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        style={{
+          backgroundColor: primaryColor,
+          color: primaryTextColor,
+        }}
+        disabled={!allCheckboxesChecked}
+        onClick={() => {
+          // When completing Step 2, closes component and returns to original Step 4
+          if (onComplete) onComplete();
+        }}
+      >
+        Continue
+      </Button>
+    </div>
+  );
+
+  // LÓGICA DE RENDERIZAÇÃO AUTOMÁTICA baseada no status do order
+  // Se in_transit, retorna IMEDIATAMENTE a tela de Gestão de Expectativa
+  if (order.status === "in_transit") {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <Card className="border-gray-200 shadow-sm rounded-lg p-6 md:p-8">
+          {renderExpectationManagement()}
+        </Card>
+      </div>
+    );
+  }
+
+  // Se delivered, renderiza o fluxo de Authority Check
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      {step === 1 && (
+        <>
+          {/* Ícone, Badge e Título - Fora do Card */}
+          <div className="space-y-6 mb-6">
+            <div className="flex items-center justify-center">
+              <div
+                className="rounded-full p-4"
+                style={{ backgroundColor: `${primaryColor}15` }}
+              >
+                <CheckCircle className="h-12 w-12" style={{ color: primaryColor }} />
+              </div>
+            </div>
+
+            {/* Status Badge */}
+            <div className="flex justify-center">
+              <span
+                className="px-4 py-1.5 rounded-full text-sm font-semibold"
+                style={{
+                  backgroundColor: "#ECFDF5",
+                  color: "#059669",
+                }}
+              >
+                Delivered
+              </span>
+            </div>
+
+            {/* Title */}
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-semibold text-gray-900">
+                The carrier confirms delivery.
+              </h2>
+            </div>
+          </div>
+
+          {/* Conteúdo fora do card */}
+          <div className="space-y-6 animate-in fade-in-50 duration-300">
+            {/* Bloco de dados com borda padrão, igual das etapas anteriores */}
+            <div className="bg-gray-50 rounded-xl p-6" style={{ border: '0.5px solid #D1D5DB' }}>
+              <div className="space-y-5">
+                {/* Carrier */}
+                {order.carrier && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Package className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        Carrier
+                      </p>
+                    </div>
+                    <p className="text-base font-medium text-gray-900">
+                      {order.carrier}
+                    </p>
+                  </div>
+                )}
+
+                {/* Status */}
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      Status
+                    </p>
+                  </div>
+                  <p className="text-base font-medium text-gray-900 capitalize">
+                    {order.status === "delivered" ? "Delivered" : order.status}
+                  </p>
+                </div>
+
+                {/* Delivery Date/Time */}
+                {(order.deliveryDate || order.deliveryTime) && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <Clock className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        {order.deliveryTime ? "Delivery date and time" : "Delivery date"}
+                      </p>
+                    </div>
+                    <p className="text-base font-medium text-gray-900">
+                      {formatDeliveryDateTime()}
+                    </p>
+                  </div>
+                )}
+
+                {/* Location - HIGHLIGHTED */}
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <MapPin className="h-4 w-4 text-red-600 flex-shrink-0" />
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      Location
+                    </p>
+                  </div>
+                  <p className="text-base font-semibold text-gray-900">
+                    {getDeliveryLocation()}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Tip */}
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-gray-600 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-gray-700">
+                  💡 Tip: 85% of customers find the package at reception or with a neighbor who received it by mistake.
+                </p>
+              </div>
+            </div>
+
+            {/* Stacked buttons with inverted psychology */}
+            <div className="flex flex-col items-center gap-3">
+              {/* Primary button: "I'll check again" - more prominent */}
+              <Button
+                className="chargemind-primary-button w-[85%] shadow-sm hover:shadow-md transition-all"
+                style={{ backgroundColor: primaryColor, color: primaryTextColor }}
+                onClick={() => {
+                  if (onClose) onClose();
+                  else setStep(1);
+                }}
+              >
+                I'll check again
+              </Button>
+              
+              {/* Secondary button: "I didn't receive" - just discrete red link */}
+              <button
+                type="button"
+                className="chargemind-text-link-not-order"
+                onClick={() => setStep(2)}
+              >
+                I didn't receive it, I need help
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+      {step === 2 && (
+        <Card className="border-gray-200 shadow-sm rounded-lg p-6 md:p-8">
+          {renderStep2()}
+        </Card>
+      )}
+    </div>
+  );
+};

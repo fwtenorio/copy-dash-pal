@@ -1,0 +1,72 @@
+/* Removido @tailwind base; para evitar vazamento de CSS para o tema da loja Shopify */
+@tailwind components;
+@tailwind utilities;
+
+/* Reset escopado apenas para o container raiz do proxy */
+/* Protege o tema da loja Shopify de ser afetado pelo CSS do proxy */
+#chargemind-proxy-root h1,
+#chargemind-proxy-root h2,
+#chargemind-proxy-root h3,
+#chargemind-proxy-root h4,
+#chargemind-proxy-root h5,
+#chargemind-proxy-root h6 {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+/* ============================================================================
+   OR DIVIDER - Separador visual profissional (Isolado para Resolution Hub)
+   ============================================================================
+   
+   Divisor "OR" com linhas contínuas usando CSS puro (::before e ::after)
+   Padrão usado em interfaces modernas de login e checkout
+   
+   Estrutura:
+   ───────────────── OR ─────────────────
+   
+   IMPORTANTE: Escopo isolado com .chargemind-resolution-hub para evitar
+   vazamento de CSS para outras páginas do sistema.
+   
+   ============================================================================ */
+
+.chargemind-resolution-hub .or-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+}
+
+.chargemind-resolution-hub .or-divider::before,
+.chargemind-resolution-hub .or-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #d1d5db; /* gray-300 */
+}
+
+.chargemind-resolution-hub .or-divider span {
+  padding: 0 1rem; /* 16px de cada lado */
+  white-space: nowrap;
+}
+
+/* Texto "OR" - Pequeno, discreto, funcional */
+.chargemind-resolution-hub .or-divider .chargemind-or-text {
+  font-size: 12px; /* Mobile: 12px */
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #9ca3af; /* gray-400 */
+}
+
+/* Responsividade: Desktop: 13px */
+@media (min-width: 768px) {
+  .chargemind-resolution-hub .or-divider .chargemind-or-text {
+    font-size: 13px;
+  }
+}
+
+/* Responsividade: em telas pequenas, reduz o padding */
+@media (max-width: 640px) {
+  .chargemind-resolution-hub .or-divider span {
+    padding: 0 0.75rem; /* 12px de cada lado */
+  }
+}

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Teste Local - Proxy App (Simula Shopify)</title>
+    <style>
+      /* 
+        ⚠️ IMPORTANTE: Este arquivo é APENAS para desenvolvimento local.
+        Ele NÃO é incluído no build principal e NÃO afeta o sistema.
+        
+        Estilos aqui são seguros porque:
+        1. proxy.html não é usado no build (vite.config.ts garante isso)
+        2. Estilos são específicos para containers do proxy
+        3. Não há risco de vazamento para o sistema principal
+      */
+      
+      /* Simula o ambiente do Shopify - fundo branco como no tema */
+      /* Escopo: apenas quando proxy.html é acessado diretamente */
+      body { 
+        background-color: white; 
+        margin: 0;
+        padding: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+      
+      /* Containers como no Shopify - sem padding extra, sem max-width */
+      /* Escopo: apenas containers do proxy (não afeta sistema principal) */
+      #root, #chargemind-proxy-root {
+        width: 100%;
+        display: block;
+        visibility: visible;
+        background-color: white;
+        color: #1A1A1A;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Containers como gerados pela Edge Function do Shopify -->
+    <div id="root" style="width: 100%; display: block; visibility: visible;"></div>
+    <div id="chargemind-proxy-root" style="width: 100%; display: block; visibility: visible;"></div>
+
+    <script>
+      // Simula os dados que a Edge Function injeta
+      // Em desenvolvimento local, o ResolutionHub buscará do Supabase se estiver logado
+      // Caso contrário, usa os dados mockados abaixo
+      window.CHARGEMIND_DATA = {
+        shop: "loja-teste.myshopify.com",
+        branding: {
+          // Deixe vazio para simular busca do Supabase em localhost
+          // Ou preencha com dados reais para testar branding específico
+          brand_color: null,
+          brand_text_color: null,
+          logo_url: null,
+          heading: null
+        },
+        useMockData: new URLSearchParams(window.location.search).get('mock') === 'true'
+      };
+      
+      console.log("📦 CHARGEMIND_DATA (local):", window.CHARGEMIND_DATA);
+      console.log("💡 Dica: Em localhost, o ResolutionHub busca branding do Supabase se você estiver logado");
+      console.log("💡 Use ?mock=true na URL para forçar dados mockados");
+    </script>
+
+    <script type="module" src="/src/proxy-index.tsx"></script>
+  </body>
+</html>

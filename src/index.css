@@ -1,0 +1,296 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 98%;
+    --foreground: 224 15% 25%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 224 15% 25%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 15% 25%;
+
+    --primary: 155 72% 35%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 224 15% 25%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 220 14% 96%;
+    --accent-foreground: 224 15% 25%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 87%;
+    --input: 0 0% 87%;
+    --ring: 155 72% 35%;
+
+    --radius: 0.75rem;
+
+    --chart-primary: 155 72% 35%;
+    --chart-secondary: 155 60% 50%;
+    --chart-tertiary: 155 40% 65%;
+    --chart-success: 142 76% 36%;
+    --chart-warning: 38 92% 50%;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 224 15% 25%;
+    --sidebar-primary: 155 72% 35%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 224 15% 25%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 155 72% 35%;
+  }
+
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 210 40% 98%;
+    --card: 224 71% 4%;
+    --card-foreground: 210 40% 98%;
+    --popover: 224 71% 4%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 155 72% 35%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 215 27.9% 16.9%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 215 27.9% 16.9%;
+    --muted-foreground: 217.9 10.6% 64.9%;
+    --accent: 215 27.9% 16.9%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 215 27.9% 16.9%;
+    --input: 215 27.9% 16.9%;
+    --ring: 155 72% 35%;
+    --chart-primary: 155 72% 35%;
+    --chart-secondary: 155 60% 50%;
+    --chart-tertiary: 155 40% 65%;
+    --sidebar-background: 224 71% 4%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 155 72% 35%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 27.9% 16.9%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 215 27.9% 16.9%;
+    --sidebar-ring: 155 72% 35%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply bg-background text-foreground overflow-x-hidden;
+    overflow-y: scroll;
+  }
+
+  body {
+    @apply bg-background text-foreground overflow-x-hidden;
+  }
+
+  /* Prevent Radix UI scroll lock from causing layout shift */
+  html body[data-scroll-locked] {
+    margin-right: 0px !important;
+    margin-left: 0px !important;
+    padding-right: 0px !important;
+    overflow: visible !important;
+  }
+
+  /* Overlay scrollbars to prevent layout shifts */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+
+  /* Webkit overlay scrollbars */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
+
+  /* Large screen background styling for centered content */
+  @media (min-width: 1440px) {
+    .bg-muted\/30 {
+      background-color: hsl(var(--muted) / 0.3);
+    }
+  }
+}
+
+@layer components {
+  .auth-grid-background {
+    background-color: hsl(166 65% 47%);
+    background-image: 
+      linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 120px 120px;
+  }
+
+  /* Phone Input Customization */
+  .phone-input-custom {
+    @apply relative;
+  }
+
+  .phone-input-custom .PhoneInputInput {
+    @apply w-full border-0 bg-transparent outline-none text-base placeholder:text-muted-foreground;
+  }
+
+  .phone-input-custom .PhoneInputCountry {
+    @apply mr-2 flex items-center gap-2;
+  }
+
+  .phone-input-custom .PhoneInputCountryIcon {
+    @apply w-6 h-6 rounded-sm overflow-hidden;
+  }
+
+  .phone-input-custom .PhoneInputCountrySelect {
+    @apply text-sm outline-none bg-transparent cursor-pointer;
+  }
+
+  .phone-input-custom .PhoneInputCountrySelectArrow {
+    @apply ml-1 opacity-50;
+  }
+}
+
+/* Donut chart segment animation */
+@keyframes donut-segment-draw {
+  0% {
+    stroke-dashoffset: 251.33;
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: var(--final-offset, 0);
+    opacity: 1;
+  }
+}
+
+/* Radar/Sonar Animation Keyframes */
+@keyframes radar-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+@keyframes radar-sweep {
+  0% {
+    transform: translateX(-50%) rotate(0deg);
+  }
+  100% {
+    transform: translateX(-50%) rotate(360deg);
+  }
+}
+
+@keyframes ring-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ring-rotate-reverse {
+  0% {
+    transform: rotate(360deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px rgba(56, 204, 147, 0.4),
+      0 0 40px rgba(56, 204, 147, 0.2),
+      0 0 60px rgba(56, 204, 147, 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 0 30px rgba(56, 204, 147, 0.6),
+      0 0 60px rgba(56, 204, 147, 0.3),
+      0 0 80px rgba(56, 204, 147, 0.15);
+  }
+}
+
+@keyframes inner-glow {
+  0%, 100% {
+    box-shadow: inset 0 2px 10px rgba(255, 255, 255, 0.3),
+                inset 0 -2px 10px rgba(0, 0, 0, 0.2);
+  }
+  50% {
+    box-shadow: inset 0 2px 15px rgba(255, 255, 255, 0.4),
+                inset 0 -2px 15px rgba(0, 0, 0, 0.25);
+  }
+}
+
+/* 3D Sphere pulse animation */
+@keyframes sphere-pulse {
+  0% {
+    transform: scale(1) rotateX(0deg) rotateY(0deg);
+    box-shadow:
+      inset 0 -6px 14px rgba(0,0,0,0.06),
+      inset 0 6px 14px rgba(255,255,255,0.9),
+      0 0 20px rgba(56,204,147,0.18),
+      0 8px 18px rgba(56,204,147,0.12);
+  }
+  50% {
+    transform: scale(1.06) rotateX(1deg) rotateY(-1deg);
+    box-shadow:
+      inset 0 -8px 18px rgba(0,0,0,0.08),
+      inset 0 8px 18px rgba(255,255,255,0.97),
+      0 0 44px rgba(56,204,147,0.32),
+      0 12px 30px rgba(56,204,147,0.22);
+  }
+  100% {
+    transform: scale(1) rotateX(0deg) rotateY(0deg);
+    box-shadow:
+      inset 0 -6px 14px rgba(0,0,0,0.06),
+      inset 0 6px 14px rgba(255,255,255,0.9),
+      0 0 20px rgba(56,204,147,0.18),
+      0 8px 18px rgba(56,204,147,0.12);
+  }
+}
+
+/* Slow subtle 3D tilt loop */
+@keyframes sphere-tilt {
+  0% { transform: rotateX(0deg) rotateY(0deg); }
+  25% { transform: rotateX(1deg) rotateY(-1deg); }
+  50% { transform: rotateX(0.5deg) rotateY(1deg); }
+  75% { transform: rotateX(-0.5deg) rotateY(0.5deg); }
+  100% { transform: rotateX(0deg) rotateY(0deg); }
+}
