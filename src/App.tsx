@@ -318,6 +318,8 @@ const App = () => {
               <Route path="/admin" element={<Admin />} />
               <Route path="/test/item-not-received" element={<ItemNotReceivedTest />} />
             </Route>
+            {/* Proxy route - public, no auth required */}
+            <Route path="/proxy" element={<ResolutionHub />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
