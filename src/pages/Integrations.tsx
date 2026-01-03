@@ -9,7 +9,7 @@ import { SearchInput } from "@/components/SearchInput";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { HelpCircle } from "lucide-react";
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/safeClient";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";

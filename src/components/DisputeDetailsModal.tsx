@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/safeClient";
 import { Skeleton } from "@/components/ui/skeleton";
 import { generateDisputePDF } from "@/utils/generateDisputePDF";
 import { prepareDisputeForPDF } from "@/utils/prepareDisputeForPDF";

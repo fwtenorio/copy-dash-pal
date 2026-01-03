@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Bell, ChevronDown, LogOut } from "lucide-react";
 import { DateRangePicker } from "./DateRangePicker";
 import { DateRange } from "react-day-picker";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/safeClient";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";

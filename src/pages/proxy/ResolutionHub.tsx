@@ -23,7 +23,7 @@ import {
   XCircle,
   ExternalLink
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/safeClient";
 import { toast, Toaster as Sonner } from "sonner";
 import { ItemNotReceivedFlow } from "@/components/ItemNotReceivedFlow";
 
