@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import ResolutionHub from "@/pages/proxy/ResolutionHub";
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/safeClient";
 import { Session } from "@supabase/supabase-js";
 import { UserDataProvider } from "@/hooks/useUserData";
 import { MockDataProvider } from "@/contexts/MockDataContext";

@@ -31,7 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StoreSelector } from "@/components/StoreSelector";
 import { FeedbackModal } from "@/components/FeedbackModal";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/safeClient";
 import { toast } from "@/hooks/use-toast";
 
 // Função auxiliar para determinar a cor do badge baseada no tipo de item

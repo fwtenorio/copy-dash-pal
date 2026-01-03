@@ -60,7 +60,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/safeClient";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { useUserData } from "@/hooks/useUserData";

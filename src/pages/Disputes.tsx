@@ -54,7 +54,7 @@ import {
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/safeClient";
 import { useMockDataContext } from "@/contexts/MockDataContext";
 import { getMockDisputesData } from "@/data/mockDisputesData";
 

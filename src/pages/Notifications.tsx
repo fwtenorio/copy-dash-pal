@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/safeClient";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { Bell, Shield, Mail, FileText, AlertTriangle, Plus, RefreshCcw, XCircle, Hand, ShieldAlert, Ban, Clock } from "lucide-react";
