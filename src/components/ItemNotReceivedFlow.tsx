@@ -284,102 +284,85 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
             </p>
           </div>
 
-          {/* Conteúdo fora do card */}
-          <div className="space-y-6 animate-in fade-in-50 duration-300">
-            {/* Bloco de dados com borda padrão, igual das etapas anteriores */}
-            <div className="bg-gray-50 rounded-xl p-6" style={{ border: '0.5px solid #D1D5DB' }}>
-              <div className="space-y-5">
-                {/* Carrier */}
-                {order.carrier && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <Package className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        Carrier
-                      </p>
-                    </div>
-                    <p className="text-base font-medium text-gray-900">
-                      {order.carrier}
-                    </p>
-                  </div>
-                )}
-
-                {/* Status */}
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                      Status
-                    </p>
-                  </div>
-                  <p className="text-base font-medium text-gray-900 capitalize">
-                    {order.status === "delivered" ? "Delivered" : order.status}
-                  </p>
-                </div>
-
-                {/* Delivery Date/Time */}
-                {(order.deliveryDate || order.deliveryTime) && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <Clock className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        {order.deliveryTime ? "Delivery date and time" : "Delivery date"}
-                      </p>
-                    </div>
-                    <p className="text-base font-medium text-gray-900">
-                      {formatDeliveryDateTime()}
-                    </p>
-                  </div>
-                )}
-
-                {/* Location - HIGHLIGHTED */}
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <MapPin className="h-4 w-4 text-red-600 flex-shrink-0" />
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                      Location
-                    </p>
-                  </div>
-                  <p className="text-base font-semibold text-gray-900">
-                    {getDeliveryLocation()}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Tip */}
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-gray-600 mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-gray-700">
-                  💡 Tip: 85% of customers find the package at reception or with a neighbor who received it by mistake.
+          {/* Conteúdo - sem borda extra pois já está dentro do Card principal */}
+          <div className="space-y-5 animate-in fade-in-50 duration-300 px-6">
+            {/* Carrier */}
+            {order.carrier && (
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                  Carrier
+                </p>
+                <p className="text-base font-medium text-gray-900">
+                  {order.carrier}
                 </p>
               </div>
+            )}
+
+            {/* Status */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                Status
+              </p>
+              <p className="text-base font-medium text-gray-900 capitalize">
+                {order.status === "delivered" ? "Delivered" : order.status}
+              </p>
             </div>
 
-            {/* Stacked buttons with inverted psychology */}
-            <div className="flex flex-col items-center gap-3">
-              {/* Primary button: "I'll check again" - more prominent */}
-              <Button
-                className="chargemind-primary-button w-[85%] shadow-sm hover:shadow-md transition-all"
-                style={{ backgroundColor: primaryColor, color: primaryTextColor }}
-                onClick={() => {
-                  if (onClose) onClose();
-                  else setStep(1);
-                }}
-              >
-                I'll check again
-              </Button>
-              
-              {/* Secondary button: "I didn't receive" - just discrete red link */}
-              <button
-                type="button"
-                className="chargemind-text-link-not-order"
-                onClick={() => setStep(2)}
-              >
-                I didn't receive it, I need help
-              </button>
+            {/* Delivery Date/Time */}
+            {(order.deliveryDate || order.deliveryTime) && (
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                  {order.deliveryTime ? "Delivery date and time" : "Delivery date"}
+                </p>
+                <p className="text-base font-medium text-gray-900">
+                  {formatDeliveryDateTime()}
+                </p>
+              </div>
+            )}
+
+            {/* Location */}
+            <div>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                Location
+              </p>
+              <p className="text-base font-semibold text-gray-900">
+                {getDeliveryLocation()}
+              </p>
             </div>
+          </div>
+
+          {/* Tip */}
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mx-6">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-gray-600 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-gray-700">
+                💡 Tip: 85% of customers find the package at reception or with a neighbor who received it by mistake.
+              </p>
+            </div>
+          </div>
+
+          {/* Stacked buttons with inverted psychology */}
+          <div className="flex flex-col items-center gap-3 pb-4">
+            {/* Primary button: "I'll check again" - more prominent */}
+            <Button
+              className="chargemind-primary-button w-[85%] shadow-sm hover:shadow-md transition-all"
+              style={{ backgroundColor: primaryColor, color: primaryTextColor }}
+              onClick={() => {
+                if (onClose) onClose();
+                else setStep(1);
+              }}
+            >
+              I'll check again
+            </Button>
+            
+            {/* Secondary button: "I didn't receive" - just discrete red link */}
+            <button
+              type="button"
+              className="chargemind-text-link-not-order"
+              onClick={() => setStep(2)}
+            >
+              I didn't receive it, I need help
+            </button>
           </div>
         </>
       )}
