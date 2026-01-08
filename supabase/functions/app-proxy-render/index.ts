@@ -149,35 +149,17 @@ function buildHtml(payload: { shop: string; branding: Record<string, unknown>; u
       --primary-strong: ${hexToRgba(brandColor, 0.6)};
     }
     
-    /* CRÍTICO: Reseta o background da página para cinza claro (NÃO verde) */
-    /* Alguns temas Shopify aplicam a cor de marca em wrappers (body/main/containers) */
-    html, body,
-    body > div,
-    #MainContent, main, [role="main"],
-    .main-content,
-    .content-for-layout,
-    .shopify-section,
-    [id^="shopify-section-"],
-    .page-width,
-    .page-container {
-      background-color: #F8F9FA !important;
-    }
-
-    /* Containers do ChargeMind - garante layout consistente dentro do proxy */
-    #root, #chargemind-proxy-root,
+    /* ISOLAMENTO TOTAL: Estilos aplicados APENAS dentro dos containers do ChargeMind */
+    /* NÃO afeta NENHUM elemento fora desses containers - protege o tema Shopify */
+    
+    #root,
+    #chargemind-proxy-root,
     .chargemind-resolution-hub {
       background-color: #F8F9FA !important;
       color: #1A1A1A !important;
-    }
-
-    #root, #chargemind-proxy-root {
       min-height: 80vh;
       padding: 20px 0;
-    }
-    
-    /* Botões primários usam a cor de branding */
-    .chargemind-resolution-hub button[style*="background-color"] {
-      /* Permite inline styles, não sobrescreve */
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
   </style>
   
