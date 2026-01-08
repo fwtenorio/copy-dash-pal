@@ -171,16 +171,19 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
       </div>
 
       <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
-        <div className="space-y-4">
+        {/* Usa px (não rem) porque no proxy o font-size pode ser sobrescrito pelo tema da loja */}
+        <div className="space-y-[16px]">
           <label className="flex items-start gap-3 cursor-pointer group">
             <Checkbox
               checked={checkboxes.neighbors}
               onCheckedChange={() => handleCheckboxChange("neighbors")}
-              className="mt-[3px]"
+              className="mt-[3px] h-[16px] w-[16px] min-h-[16px] min-w-[16px]"
             />
             <div className="flex-1">
-              <p className="text-base font-normal text-gray-900">I checked with neighbors</p>
-              <p className="text-sm text-gray-600 mt-1">The product may have been delivered to a nearby address</p>
+              <p className="text-[16px] leading-[22px] font-normal text-gray-900">I checked with neighbors</p>
+              <p className="text-[14px] leading-[20px] text-gray-600 mt-[4px]">
+                The product may have been delivered to a nearby address
+              </p>
             </div>
           </label>
 
@@ -188,11 +191,13 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
             <Checkbox
               checked={checkboxes.reception}
               onCheckedChange={() => handleCheckboxChange("reception")}
-              className="mt-[3px]"
+              className="mt-[3px] h-[16px] w-[16px] min-h-[16px] min-w-[16px]"
             />
             <div className="flex-1">
-              <p className="text-base font-normal text-gray-900">I checked at reception/concierge</p>
-              <p className="text-sm text-gray-600 mt-1">The product may be stored at the building's reception</p>
+              <p className="text-[16px] leading-[22px] font-normal text-gray-900">I checked at reception/concierge</p>
+              <p className="text-[14px] leading-[20px] text-gray-600 mt-[4px]">
+                The product may be stored at the building's reception
+              </p>
             </div>
           </label>
 
@@ -200,11 +205,13 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
             <Checkbox
               checked={checkboxes.mailbox}
               onCheckedChange={() => handleCheckboxChange("mailbox")}
-              className="mt-[3px]"
+              className="mt-[3px] h-[16px] w-[16px] min-h-[16px] min-w-[16px]"
             />
             <div className="flex-1">
-              <p className="text-base font-normal text-gray-900">I checked the mailbox</p>
-              <p className="text-sm text-gray-600 mt-1">Small products may have been left in the mailbox</p>
+              <p className="text-[16px] leading-[22px] font-normal text-gray-900">I checked the mailbox</p>
+              <p className="text-[14px] leading-[20px] text-gray-600 mt-[4px]">
+                Small products may have been left in the mailbox
+              </p>
             </div>
           </label>
         </div>
