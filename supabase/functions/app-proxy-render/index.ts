@@ -150,27 +150,29 @@ function buildHtml(payload: { shop: string; branding: Record<string, unknown>; u
     }
     
     /* CRÍTICO: Reseta o background da página para cinza claro (NÃO verde) */
-    /* O tema Shopify pode aplicar cores de marca ao wrapper do proxy */
-    body, html {
+    /* Alguns temas Shopify aplicam a cor de marca em wrappers (body/main/containers) */
+    html, body,
+    body > div,
+    #MainContent, main, [role="main"],
+    .main-content,
+    .content-for-layout,
+    .shopify-section,
+    [id^="shopify-section-"],
+    .page-width,
+    .page-container {
       background-color: #F8F9FA !important;
     }
-    
-    /* O wrapper main do Shopify para app proxy */
-    main, .main-content, #MainContent, [role="main"] {
-      background-color: #F8F9FA !important;
-    }
-    
-    /* Containers do ChargeMind - fundo branco para o card, cinza para fora */
-    #root, #chargemind-proxy-root {
-      background-color: #F8F9FA !important;
-      color: #1A1A1A !important;
-      min-height: 80vh;
-      padding: 20px 0;
-    }
-    
-    /* Container principal do Resolution Hub */
+
+    /* Containers do ChargeMind - garante layout consistente dentro do proxy */
+    #root, #chargemind-proxy-root,
     .chargemind-resolution-hub {
       background-color: #F8F9FA !important;
+      color: #1A1A1A !important;
+    }
+
+    #root, #chargemind-proxy-root {
+      min-height: 80vh;
+      padding: 20px 0;
     }
     
     /* Botões primários usam a cor de branding */
