@@ -22,15 +22,15 @@
 
 /* Tip card typography/icons must be px-based because Shopify themes often change the root font-size (rem) */
 .chargemind-resolution-hub .chargemind-tip-text {
-  font-size: 16px !important;
-  line-height: 1.6 !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
 }
 
 .chargemind-resolution-hub .chargemind-tip-icon {
-  width: 28px !important;
-  height: 28px !important;
-  min-width: 28px !important;
-  min-height: 28px !important;
+  width: 16px !important;
+  height: 16px !important;
+  min-width: 16px !important;
+  min-height: 16px !important;
 }
 
 /* Reset escopado apenas para o container raiz do proxy */
