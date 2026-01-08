@@ -217,7 +217,7 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
         </div>
       </div>
 
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center gap-3">
         <Button
           className="chargemind-primary-button w-[85%] shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           style={{
@@ -232,6 +232,10 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
         >
           Continue
         </Button>
+
+        <button type="button" className="chargemind-text-link-not-order" onClick={() => setStep(1)}>
+          Back
+        </button>
       </div>
     </div>
   );
