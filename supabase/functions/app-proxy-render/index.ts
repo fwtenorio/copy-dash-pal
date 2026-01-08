@@ -151,7 +151,16 @@ function buildHtml(payload: { shop: string; branding: Record<string, unknown>; u
     
     /* ISOLAMENTO TOTAL: Estilos aplicados APENAS dentro dos containers do ChargeMind */
     /* NÃO afeta NENHUM elemento fora desses containers - protege o tema Shopify */
-    
+
+    /* Evita “espaço fantasma”: quando um dos roots fica vazio, ele não deve reservar altura */
+    #root:empty,
+    #chargemind-proxy-root:empty {
+      display: none !important;
+      min-height: 0 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
     #root,
     #chargemind-proxy-root,
     .chargemind-resolution-hub {
@@ -164,9 +173,8 @@ function buildHtml(payload: { shop: string; branding: Record<string, unknown>; u
     }
   </style>
   
-  <!-- 2. Containers - Elementos onde o React vai renderizar -->
-  <!-- IMPORTANTE: id="root" deve estar presente e visível para o React encontrar -->
-  <div id="root" style="width: 100%; display: block; visibility: visible;"></div>
+  <!-- 2. Containers - Elemento onde o React vai renderizar -->
+  <!-- IMPORTANTE: manter APENAS um container evita “espaço fantasma” quando o tema injeta wrappers -->
   <div id="chargemind-proxy-root" style="width: 100%; display: block; visibility: visible;"></div>
 
   <!-- 3. Dados globais - Configuração do branding -->
