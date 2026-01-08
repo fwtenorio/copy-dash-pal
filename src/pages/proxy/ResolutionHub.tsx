@@ -4584,7 +4584,7 @@ const ResolutionHub = () => {
       />
       <div 
         id="chargemind-resolution-hub-container"
-        className="chargemind-resolution-hub min-h-screen px-4 py-10 font-sans" 
+        className="chargemind-resolution-hub min-h-screen px-4 pt-4 pb-10 font-sans"
         style={{
           ...cssVars,
           fontSize: '16px',
