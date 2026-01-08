@@ -1586,12 +1586,37 @@ const ResolutionHub = () => {
     // Headline e Subheadline apenas no Step 1, fora do Card
     if (currentStep === 1) {
       return (
-        <div className="text-center mb-6">
-          <h2 className="chargemind-header-title">
-            Need help with your order?<br></br> We're here to help.
-          </h2>
-          <p className="chargemind-header-subtitle">
-            Start your support quickly and securely. Our team prioritizes direct resolutions here.
+        <div className="text-center mb-8">
+          {/* Logo do cliente (se houver) */}
+          {storeSettings.logo_url && (
+            <img 
+              src={storeSettings.logo_url} 
+              alt={storeSettings.nome_empresa || "Store"} 
+              style={{ 
+                height: '48px', 
+                margin: '0 auto 20px',
+                objectFit: 'contain',
+              }} 
+            />
+          )}
+          <h1 style={{ 
+            fontSize: '28px', 
+            fontWeight: '700', 
+            color: '#111827',
+            marginBottom: '12px',
+            lineHeight: '1.3',
+            letterSpacing: '-0.02em',
+          }}>
+            Need help with your order?
+          </h1>
+          <p style={{ 
+            fontSize: '16px', 
+            color: '#6B7280',
+            lineHeight: '1.6',
+            maxWidth: '380px',
+            margin: '0 auto',
+          }}>
+            Our team prioritizes direct resolutions here. Start your support quickly and securely.
           </p>
         </div>
       );
@@ -1690,16 +1715,36 @@ const ResolutionHub = () => {
   const renderStep1 = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="chargemind-step-title">Let's locate your order.</h2>
-        <p className="chargemind-step-subtitle">
+        <h2 style={{ 
+          fontSize: '20px', 
+          fontWeight: '600', 
+          color: '#111827',
+          marginBottom: '8px',
+        }}>
+          Let's locate your order
+        </h2>
+        <p style={{ 
+          fontSize: '14px', 
+          color: '#6B7280',
+          lineHeight: '1.5',
+        }}>
           Enter the order number or email used for purchase
         </p>
       </div>
 
-      <form onSubmit={handleValidation} className="space-y-6" style={{ padding: '20px' }}>
+      <form onSubmit={handleValidation} className="space-y-5" style={{ padding: '24px' }}>
         {/* Campo 1: Order number */}
         <div className="space-y-2">
-          <label htmlFor="order" className="chargemind-field-label block">
+          <label 
+            htmlFor="order" 
+            style={{ 
+              display: 'block',
+              fontSize: '14px', 
+              fontWeight: '500', 
+              color: '#374151',
+              marginBottom: '6px',
+            }}
+          >
             Order number
           </label>
           <Input
@@ -1709,21 +1754,29 @@ const ResolutionHub = () => {
             value={orderInput}
             onChange={(e) => {
               const value = e.target.value;
-              // Aceita apenas # e números
               if (value === '' || /^#?[0-9]*$/.test(value)) {
                 setOrderInput(value);
               }
             }}
-            className={`chargemind-input-field h-[60px] input-field ${orderInput ? 'has-value' : ''}`}
+            style={{
+              height: '52px',
+              borderRadius: '10px',
+              border: '1px solid #D1D5DB',
+              fontSize: '15px',
+              paddingLeft: '16px',
+              paddingRight: '16px',
+              backgroundColor: '#FFFFFF',
+              transition: 'border-color 0.2s, box-shadow 0.2s',
+            }}
             autoComplete="off"
           />
-          <p className="chargemind-helper-text">
-            You can find the number in the confirmation email sent after purchase.
+          <p style={{ fontSize: '13px', color: '#9CA3AF', marginTop: '6px' }}>
+            You can find the number in the confirmation email.
           </p>
         </div>
 
-        {/* Divisor visual OR profissional com CSS puro */}
-        <div className="relative py-5">
+        {/* Divisor visual OR */}
+        <div className="relative py-4">
           <div className="or-divider">
             <span className="chargemind-or-text">OR</span>
           </div>
@@ -1731,7 +1784,16 @@ const ResolutionHub = () => {
 
         {/* Campo 2: Email address */}
         <div className="space-y-2">
-          <label htmlFor="email" className="chargemind-field-label block">
+          <label 
+            htmlFor="email"
+            style={{ 
+              display: 'block',
+              fontSize: '14px', 
+              fontWeight: '500', 
+              color: '#374151',
+              marginBottom: '6px',
+            }}
+          >
             Email address
           </label>
           <Input
@@ -1742,40 +1804,64 @@ const ResolutionHub = () => {
             value={emailInput}
             onChange={(e) => {
               const value = e.target.value;
-              // Aceita apenas characters válidos para email
               if (value === '' || /^[a-zA-Z0-9@._-]*$/.test(value)) {
                 setEmailInput(value);
               }
             }}
-            className={`chargemind-input-field h-[60px] input-field ${emailInput ? 'has-value' : ''}`}
+            style={{
+              height: '52px',
+              borderRadius: '10px',
+              border: '1px solid #D1D5DB',
+              fontSize: '15px',
+              paddingLeft: '16px',
+              paddingRight: '16px',
+              backgroundColor: '#FFFFFF',
+              transition: 'border-color 0.2s, box-shadow 0.2s',
+            }}
             autoComplete="email"
           />
         </div>
 
         {validationError && (
-          <div className="animate-in fade-in slide-in-from-top-2 bg-red-50 border border-red-100 rounded-xl px-6 py-[18px] mt-4">
-            <div className="flex items-start gap-3">
-              <div className="flex-1">
-                <p className="chargemind-error-title">
-                We couldn't find your order
-                </p>
-                <p className="chargemind-error-message">{validationError}</p>
+          <div 
+            className="animate-in fade-in slide-in-from-top-2"
+            style={{
+              backgroundColor: '#FEF2F2',
+              border: '1px solid #FECACA',
+              borderRadius: '12px',
+              padding: '16px 20px',
+              marginTop: '16px',
+            }}
+          >
+            <p style={{ fontSize: '14px', fontWeight: '600', color: '#DC2626', marginBottom: '4px' }}>
+              We couldn't find your order
+            </p>
+            <p style={{ fontSize: '13px', color: '#7F1D1D' }}>{validationError}</p>
             {validationAttempts >= 3 && (
-              <a href="/suporte" className="text-sm text-red-600 underline mt-2 inline-block">
+              <a href="/suporte" style={{ fontSize: '13px', color: '#DC2626', textDecoration: 'underline', marginTop: '8px', display: 'inline-block' }}>
                 Need help? Contact support
               </a>
             )}
-              </div>
-            </div>
           </div>
         )}
 
-        <div className="flex justify-center">
+        <div className="flex justify-center" style={{ paddingTop: '8px' }}>
           <Button
             type="submit"
             disabled={validating || validationAttempts >= 3}
-            className="chargemind-primary-button w-[85%] shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ backgroundColor: primaryColor, color: primaryTextColor }}
+            style={{ 
+              width: '100%',
+              height: '52px',
+              borderRadius: '10px',
+              fontSize: '15px',
+              fontWeight: '600',
+              backgroundColor: primaryColor, 
+              color: primaryTextColor,
+              boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+              transition: 'all 0.2s',
+              opacity: validating || validationAttempts >= 3 ? 0.5 : 1,
+              cursor: validating || validationAttempts >= 3 ? 'not-allowed' : 'pointer',
+            }}
           >
             {validating ? (
               <span className="flex items-center justify-center gap-2">
@@ -1788,9 +1874,9 @@ const ResolutionHub = () => {
           </Button>
         </div>
 
-        <div className="flex items-center justify-center gap-2">
-          <ShieldCheck className="h-5 w-5" />
-          <span className="chargemind-trust-text">Your data is protected</span>
+        <div className="flex items-center justify-center gap-2" style={{ paddingTop: '4px' }}>
+          <ShieldCheck style={{ height: '16px', width: '16px', color: '#9CA3AF' }} />
+          <span style={{ fontSize: '13px', color: '#9CA3AF' }}>Your data is protected</span>
         </div>
       </form>
     </div>
@@ -4498,13 +4584,14 @@ const ResolutionHub = () => {
       />
       <div 
         id="chargemind-resolution-hub-container"
-        className="chargemind-resolution-hub min-h-screen bg-white px-4 py-8 font-sans" 
+        className="chargemind-resolution-hub min-h-screen px-4 py-10 font-sans" 
         style={{
           ...cssVars,
           fontSize: '16px',
           lineHeight: '1.5',
           maxWidth: '100%',
           overflowX: 'hidden',
+          backgroundColor: '#F8F9FA', /* Cinza claro similar ao sistema */
         }}
       >
         <div 
@@ -4513,24 +4600,43 @@ const ResolutionHub = () => {
             boxSizing: 'border-box',
           }}
         >
+          {/* Step Progress Indicator */}
+          {!showItemNotReceivedFlow && (
+            <div className="flex justify-center gap-1.5 mb-6">
+              {[1, 2, 3, 4, 5, 6].map((step) => (
+                <div
+                  key={step}
+                  className="h-1.5 rounded-full transition-all duration-300"
+                  style={{
+                    width: step === currentStep ? '24px' : '8px',
+                    backgroundColor: step <= currentStep ? primaryColor : '#E5E7EB',
+                    opacity: step < currentStep ? 0.6 : 1,
+                  }}
+                />
+              ))}
+            </div>
+          )}
+
           {renderHeader()}
 
         <Card 
-          className="shadow-sm rounded-md"
+          className="shadow-lg"
           style={{
             maxWidth: '100%',
             width: '100%',
             flexShrink: 0,
             boxSizing: 'border-box',
-            border: '1px solid #D1D5DB', /* gray-300 - mais visível */
+            border: '1px solid #E5E7EB', /* gray-200 - mais sutil */
+            borderRadius: '0.75rem', /* 12px - igual ao sistema */
+            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)', /* shadow-lg */
           }}
         >
           <CardContent 
             style={{
               maxWidth: '100%',
               boxSizing: 'border-box',
-              paddingTop: '25px',
-              paddingBottom: '25px',
+              paddingTop: '28px',
+              paddingBottom: '28px',
               paddingLeft: '0px',
               paddingRight: '0px',
             }}
@@ -4566,9 +4672,9 @@ const ResolutionHub = () => {
           </CardContent>
         </Card>
 
-        <div className="text-center mt-6">
-          <p className="chargemind-footer-text">
-            Powered by <img src="https://xieephvojphtjayjoxbc.supabase.co/storage/v1/object/public/assets/proxy/logo.png" alt="Chargemind" className="chargemind-footer-logo inline-block h-[14px] ml-1" />
+        <div className="text-center mt-8">
+          <p style={{ fontSize: '12px', color: '#9CA3AF', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+            Powered by <img src="https://xieephvojphtjayjoxbc.supabase.co/storage/v1/object/public/assets/proxy/logo.png" alt="Chargemind" style={{ height: '13px', opacity: 0.7 }} />
           </p>
         </div>
       </div>
