@@ -234,7 +234,7 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
         </Button>
 
         <button type="button" className="chargemind-text-link-not-order" onClick={() => setStep(1)}>
-          Back
+          ← Back
         </button>
       </div>
     </div>
