@@ -177,11 +177,11 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
             <Checkbox
               checked={checkboxes.neighbors}
               onCheckedChange={() => handleCheckboxChange("neighbors")}
-              className="mt-[5px] h-[16px] w-[16px] min-h-[16px] min-w-[16px]"
+              className="mt-1.5 translate-y-0.5 h-[16px] w-[16px] min-h-[16px] min-w-[16px]"
             />
             <div className="flex-1">
               <p className="text-[16px] leading-[24px] font-medium text-gray-900">I checked with neighbors</p>
-              <p className="text-[14px] leading-[20px] text-gray-600 mt-0">
+              <p className="text-[14px] leading-snug text-gray-600 mt-0">
                 The product may have been delivered to a nearby address
               </p>
             </div>
@@ -191,11 +191,11 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
             <Checkbox
               checked={checkboxes.reception}
               onCheckedChange={() => handleCheckboxChange("reception")}
-              className="mt-[5px] h-[16px] w-[16px] min-h-[16px] min-w-[16px]"
+              className="mt-1.5 translate-y-0.5 h-[16px] w-[16px] min-h-[16px] min-w-[16px]"
             />
             <div className="flex-1">
               <p className="text-[16px] leading-[24px] font-medium text-gray-900">I checked at reception/concierge</p>
-              <p className="text-[14px] leading-[20px] text-gray-600 mt-0">
+              <p className="text-[14px] leading-snug text-gray-600 mt-0">
                 The product may be stored at the building's reception
               </p>
             </div>
@@ -205,11 +205,11 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
             <Checkbox
               checked={checkboxes.mailbox}
               onCheckedChange={() => handleCheckboxChange("mailbox")}
-              className="mt-[5px] h-[16px] w-[16px] min-h-[16px] min-w-[16px]"
+              className="mt-1.5 translate-y-0.5 h-[16px] w-[16px] min-h-[16px] min-w-[16px]"
             />
             <div className="flex-1">
               <p className="text-[16px] leading-[24px] font-medium text-gray-900">I checked the mailbox</p>
-              <p className="text-[14px] leading-[20px] text-gray-600 mt-0">
+              <p className="text-[14px] leading-snug text-gray-600 mt-0">
                 Small products may have been left in the mailbox
               </p>
             </div>
