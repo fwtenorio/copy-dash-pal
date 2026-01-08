@@ -297,8 +297,8 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
           {/* Alert/Tip - mesma largura do card de informações */}
           <div className="md:px-3">
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
-              <div className="flex items-center gap-3">
-                <AlertTriangle className="chargemind-tip-icon text-amber-600 flex-shrink-0" />
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="chargemind-tip-icon text-amber-600 flex-shrink-0 mt-[2px]" />
                 <p className="chargemind-tip-text text-amber-800 font-medium">
                   85% of customers find the package at reception or with a neighbor who received it by mistake.
                 </p>
