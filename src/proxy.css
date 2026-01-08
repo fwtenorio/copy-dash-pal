@@ -20,6 +20,17 @@
   --proxy-shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1);
 }
 
+/* Tip card typography/icons must be px-based because Shopify themes often change the root font-size (rem) */
+.chargemind-resolution-hub .chargemind-tip-text {
+  font-size: 16px !important;
+  line-height: 1.6 !important;
+}
+
+.chargemind-resolution-hub .chargemind-tip-icon {
+  width: 24px !important;
+  height: 24px !important;
+}
+
 /* Reset escopado apenas para o container raiz do proxy */
 /* Protege o tema da loja Shopify de ser afetado pelo CSS do proxy */
 #chargemind-proxy-root h1,

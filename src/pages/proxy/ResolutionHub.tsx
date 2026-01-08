@@ -4601,7 +4601,9 @@ const ResolutionHub = () => {
           }}
         >
           {/* Step Progress Indicator */}
-          {!showItemNotReceivedFlow && (
+          {showItemNotReceivedFlow ? (
+            <div className="h-6" />
+          ) : (
             <div className="flex justify-center gap-1.5 mb-6">
               {[1, 2, 3, 4, 5, 6].map((step) => (
                 <div
