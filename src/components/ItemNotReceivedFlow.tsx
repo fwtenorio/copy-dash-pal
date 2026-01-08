@@ -177,7 +177,7 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
             <Checkbox
               checked={checkboxes.neighbors}
               onCheckedChange={() => handleCheckboxChange("neighbors")}
-              className="mt-[1px] h-[16px] w-[16px] min-h-[16px] min-w-[16px]"
+              className="mt-[21px] h-[16px] w-[16px] min-h-[16px] min-w-[16px]"
             />
             <div className="flex-1">
               <p className="text-[13px] font-bold text-gray-900">I checked with neighbors</p>
