@@ -4584,7 +4584,7 @@ const ResolutionHub = () => {
       />
       <div 
         id="chargemind-resolution-hub-container"
-        className="chargemind-resolution-hub min-h-screen px-4 pt-8 pb-10 font-sans"
+        className="chargemind-resolution-hub min-h-screen px-4 pt-12 pb-10 font-sans"
         style={{
           ...cssVars,
           fontSize: '16px',
@@ -4602,9 +4602,9 @@ const ResolutionHub = () => {
         >
           {/* Step Progress Indicator - espaçamento consistente para todas as etapas */}
           {showItemNotReceivedFlow ? (
-            <div className="h-8" />
+            <div className="h-1.5 mb-6" />
           ) : (
-            <div className="flex justify-center gap-1.5 mb-6 mt-2">
+            <div className="flex justify-center gap-1.5 mb-6">
               {[1, 2, 3, 4, 5, 6].map((step) => (
                 <div
                   key={step}
