@@ -267,72 +267,63 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
     <div className="space-y-6">
       {step === 1 && (
         <>
-          {/* Ícone, Badge e Título - Estilo igual ao "We found your order!" */}
-          <div className="text-center mb-6">
-            <div 
+          {/* Header - mesmo padrão visual do Step "We found your order!" */}
+          <div className="text-center">
+            <div
               className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 animate-in zoom-in duration-300"
-              style={{ 
+              style={{
                 backgroundColor: "#25B079",
-                boxShadow: "0 4px 12px rgba(16, 185, 129, 0.15)"
+                boxShadow: "0 4px 12px rgba(16, 185, 129, 0.15)",
               }}
             >
               <CheckCircle className="h-8 w-8 text-white" />
             </div>
             <h2 className="chargemind-step-title">Delivered</h2>
-            <p className="chargemind-step-subtitle">
-              The carrier confirms delivery
-            </p>
+            <p className="chargemind-step-subtitle">The carrier confirms delivery.</p>
           </div>
 
-          {/* Conteúdo - sem borda extra pois já está dentro do Card principal */}
-          <div className="space-y-5 animate-in fade-in-50 duration-300 px-6">
-            {/* Carrier */}
-            {order.carrier && (
-              <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                  Carrier
-                </p>
-                <p className="text-base font-medium text-gray-900">
-                  {order.carrier}
-                </p>
+          {/* Card de informações - reaproveita o mesmo layout do "We found your order!" */}
+          <div className="order-tracking-card-wrapper md:px-3">
+            <div className="order-tracking-card">
+              {/* Header Section */}
+              <div className="order-tracking-header">
+                <div className="order-tracking-header-left">
+                  <p className="order-tracking-label">ORDER</p>
+                  <p className="order-tracking-number">#{order.orderNumber || order.id?.replace('#', '') || 'N/A'}</p>
+                  <p className="order-tracking-customer">{order.customerName}</p>
+                </div>
+                <span className="order-tracking-status order-tracking-status-delivered">Delivered</span>
               </div>
-            )}
 
-            {/* Status */}
-            <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                Status
-              </p>
-              <p className="text-base font-medium text-gray-900 capitalize">
-                {order.status === "delivered" ? "Delivered" : order.status}
-              </p>
-            </div>
-
-            {/* Delivery Date/Time */}
-            {(order.deliveryDate || order.deliveryTime) && (
-              <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                  {order.deliveryTime ? "Delivery date and time" : "Delivery date"}
-                </p>
-                <p className="text-base font-medium text-gray-900">
-                  {formatDeliveryDateTime()}
-                </p>
+              {/* Details */}
+              <div className="relative py-5">
+                <div className="order-tracking-divider-line"></div>
               </div>
-            )}
-
-            {/* Location */}
-            <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                Location
-              </p>
-              <p className="text-base font-semibold text-gray-900">
-                {getDeliveryLocation()}
-              </p>
+              <div className="order-tracking-details">
+                {order.carrier && (
+                  <div className="order-tracking-detail-row">
+                    <span className="order-tracking-detail-label">Carrier:</span>
+                    <span className="order-tracking-detail-value">{order.carrier}</span>
+                  </div>
+                )}
+                {(order.deliveryDate || order.deliveryTime) && (
+                  <div className="order-tracking-detail-row">
+                    <span className="order-tracking-detail-label">
+                      {order.deliveryTime ? "Delivery date and time:" : "Delivery date:"}
+                    </span>
+                    <span className="order-tracking-detail-value">{formatDeliveryDateTime()}</span>
+                  </div>
+                )}
+                <div className="order-tracking-detail-row">
+                  <span className="order-tracking-detail-label">Location:</span>
+                  <span className="order-tracking-detail-value">{getDeliveryLocation()}</span>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Tip */}
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mx-6">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
             <div className="flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 text-gray-600 mt-0.5 flex-shrink-0" />
               <p className="text-sm text-gray-700">
@@ -341,9 +332,8 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
             </div>
           </div>
 
-          {/* Stacked buttons with inverted psychology */}
-          <div className="flex flex-col items-center gap-3 pb-4">
-            {/* Primary button: "I'll check again" - more prominent */}
+          {/* Actions */}
+          <div className="flex flex-col items-center gap-3">
             <Button
               className="chargemind-primary-button w-[85%] shadow-sm hover:shadow-md transition-all"
               style={{ backgroundColor: primaryColor, color: primaryTextColor }}
@@ -354,8 +344,7 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
             >
               I'll check again
             </Button>
-            
-            {/* Secondary button: "I didn't receive" - just discrete red link */}
+
             <button
               type="button"
               className="chargemind-text-link-not-order"
