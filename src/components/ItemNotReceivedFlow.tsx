@@ -155,58 +155,60 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
   // STEP 2: Friction Modal
   const renderStep2 = () => (
     <div className="space-y-6 animate-in fade-in-50 duration-300">
-      <div className="flex items-center justify-center">
-        <div className="rounded-full p-4 bg-yellow-100">
-          <AlertTriangle className="h-12 w-12 text-yellow-600" />
+      {/* Header - mesmo padrão visual das outras etapas */}
+      <div className="text-center">
+        <div
+          className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 animate-in zoom-in duration-300"
+          style={{
+            backgroundColor: "#F59E0B",
+            boxShadow: "0 4px 12px rgba(245, 158, 11, 0.15)",
+          }}
+        >
+          <AlertTriangle className="h-8 w-8 text-white" />
+        </div>
+        <h2 className="chargemind-step-title">Before continuing</h2>
+        <p className="chargemind-step-subtitle">Please check the following locations before proceeding:</p>
+      </div>
+
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
+        <div className="space-y-4">
+          <label className="flex items-start gap-3 cursor-pointer group">
+            <Checkbox
+              checked={checkboxes.neighbors}
+              onCheckedChange={() => handleCheckboxChange("neighbors")}
+              className="mt-0.5"
+            />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-900">I checked with neighbors</p>
+              <p className="text-xs text-gray-600 mt-0.5">The product may have been delivered to a nearby address</p>
+            </div>
+          </label>
+
+          <label className="flex items-start gap-3 cursor-pointer group">
+            <Checkbox
+              checked={checkboxes.reception}
+              onCheckedChange={() => handleCheckboxChange("reception")}
+              className="mt-0.5"
+            />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-900">I checked at reception/concierge</p>
+              <p className="text-xs text-gray-600 mt-0.5">The product may be stored at the building's reception</p>
+            </div>
+          </label>
+
+          <label className="flex items-start gap-3 cursor-pointer group">
+            <Checkbox
+              checked={checkboxes.mailbox}
+              onCheckedChange={() => handleCheckboxChange("mailbox")}
+              className="mt-0.5"
+            />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-900">I checked the mailbox</p>
+              <p className="text-xs text-gray-600 mt-0.5">Small products may have been left in the mailbox</p>
+            </div>
+          </label>
         </div>
       </div>
-
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-semibold text-gray-900">Before continuing</h2>
-        <p className="text-gray-600">Please check the following locations before proceeding:</p>
-      </div>
-
-      <Card className="border-yellow-200 bg-yellow-50 shadow-sm">
-        <CardContent className="pt-6">
-          <div className="space-y-4">
-            <label className="flex items-start gap-3 cursor-pointer group">
-              <Checkbox
-                checked={checkboxes.neighbors}
-                onCheckedChange={() => handleCheckboxChange("neighbors")}
-                className="mt-0.5"
-              />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">I checked with neighbors</p>
-                <p className="text-xs text-gray-600 mt-0.5">The product may have been delivered to a nearby address</p>
-              </div>
-            </label>
-
-            <label className="flex items-start gap-3 cursor-pointer group">
-              <Checkbox
-                checked={checkboxes.reception}
-                onCheckedChange={() => handleCheckboxChange("reception")}
-                className="mt-0.5"
-              />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">I checked at reception/concierge</p>
-                <p className="text-xs text-gray-600 mt-0.5">The product may be stored at the building's reception</p>
-              </div>
-            </label>
-
-            <label className="flex items-start gap-3 cursor-pointer group">
-              <Checkbox
-                checked={checkboxes.mailbox}
-                onCheckedChange={() => handleCheckboxChange("mailbox")}
-                className="mt-0.5"
-              />
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">I checked the mailbox</p>
-                <p className="text-xs text-gray-600 mt-0.5">Small products may have been left in the mailbox</p>
-              </div>
-            </label>
-          </div>
-        </CardContent>
-      </Card>
 
       <Button
         className="w-full h-12 shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
