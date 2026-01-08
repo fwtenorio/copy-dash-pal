@@ -137,7 +137,7 @@ function buildHtml(payload: { shop: string; branding: Record<string, unknown>; u
   <!-- 1. CSS EXTERNO PRIMEIRO - Carrega os estilos base antes de sobrescrever -->
   <link rel="stylesheet" href="${styleUrl}" />
   
-  <!-- 2. CSS INLINE - Define variáveis CSS sem forçar em todos os elementos -->
+  <!-- 2. CSS INLINE - Define variáveis CSS e reseta background do Shopify -->
   <style>
     :root {
       --primary-color: ${brandColor};
@@ -149,25 +149,33 @@ function buildHtml(payload: { shop: string; branding: Record<string, unknown>; u
       --primary-strong: ${hexToRgba(brandColor, 0.6)};
     }
     
-    /* Garante que os containers tenham fundo branco (não verde/preto) */
-    #root, #chargemind-proxy-root {
-      background-color: white !important;
-      color: #1A1A1A !important;
+    /* CRÍTICO: Reseta o background da página para cinza claro (NÃO verde) */
+    /* O tema Shopify pode aplicar cores de marca ao wrapper do proxy */
+    body, html {
+      background-color: #F8F9FA !important;
     }
     
-    /* Aplica cores de branding APENAS em elementos que explicitamente usam var(--primary-color) */
-    /* Não força cores em inputs, cards ou backgrounds */
+    /* O wrapper main do Shopify para app proxy */
+    main, .main-content, #MainContent, [role="main"] {
+      background-color: #F8F9FA !important;
+    }
     
-    /* Sobrescreve cores verdes antigas APENAS em botões e elementos com estilo inline verde */
-    button[style*="#1B966C"],
-    button[style*="#19976F"],
-    button[style*="rgb(27, 150, 108)"],
-    button[style*="rgb(25, 151, 111)"],
-    [style*="background-color"][style*="#1B966C"],
-    [style*="background-color"][style*="#19976F"] {
-      background-color: var(--primary-color) !important;
-      color: var(--text-color) !important;
-      border-color: var(--primary-color) !important;
+    /* Containers do ChargeMind - fundo branco para o card, cinza para fora */
+    #root, #chargemind-proxy-root {
+      background-color: #F8F9FA !important;
+      color: #1A1A1A !important;
+      min-height: 80vh;
+      padding: 20px 0;
+    }
+    
+    /* Container principal do Resolution Hub */
+    .chargemind-resolution-hub {
+      background-color: #F8F9FA !important;
+    }
+    
+    /* Botões primários usam a cor de branding */
+    .chargemind-resolution-hub button[style*="background-color"] {
+      /* Permite inline styles, não sobrescreve */
     }
   </style>
   
