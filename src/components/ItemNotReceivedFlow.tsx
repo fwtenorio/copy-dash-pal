@@ -180,7 +180,7 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
               className="mt-[3px] h-[16px] w-[16px] min-h-[16px] min-w-[16px]"
             />
             <div className="flex-1">
-              <p className="text-[16px] leading-[22px] font-normal text-gray-900">I checked with neighbors</p>
+              <p className="text-[16px] leading-[22px] font-medium text-gray-900">I checked with neighbors</p>
               <p className="text-[14px] leading-[20px] text-gray-600 mt-[4px]">
                 The product may have been delivered to a nearby address
               </p>
@@ -194,7 +194,7 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
               className="mt-[3px] h-[16px] w-[16px] min-h-[16px] min-w-[16px]"
             />
             <div className="flex-1">
-              <p className="text-[16px] leading-[22px] font-normal text-gray-900">I checked at reception/concierge</p>
+              <p className="text-[16px] leading-[22px] font-medium text-gray-900">I checked at reception/concierge</p>
               <p className="text-[14px] leading-[20px] text-gray-600 mt-[4px]">
                 The product may be stored at the building's reception
               </p>
@@ -208,7 +208,7 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
               className="mt-[3px] h-[16px] w-[16px] min-h-[16px] min-w-[16px]"
             />
             <div className="flex-1">
-              <p className="text-[16px] leading-[22px] font-normal text-gray-900">I checked the mailbox</p>
+              <p className="text-[16px] leading-[22px] font-medium text-gray-900">I checked the mailbox</p>
               <p className="text-[14px] leading-[20px] text-gray-600 mt-[4px]">
                 Small products may have been left in the mailbox
               </p>
