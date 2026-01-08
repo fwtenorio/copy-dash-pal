@@ -255,7 +255,7 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
           </div>
 
           {/* Card de informações - reaproveita o mesmo layout do "We found your order!" */}
-          <div className="order-tracking-card-wrapper md:px-3">
+          <div className="order-tracking-card-wrapper">
             <div className="order-tracking-card">
               {/* Header Section */}
               <div className="order-tracking-header">
@@ -295,12 +295,10 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
           </div>
 
           {/* Alert/Tip - mesma largura do card de informações */}
-          <div className="md:px-3">
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
-              <p className="chargemind-tip-text text-amber-800 font-medium">
-                ⚠️ 85% of customers find the package at reception or with a neighbor who received it by mistake.
-              </p>
-            </div>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
+            <p className="chargemind-tip-text text-amber-800 font-medium">
+              ⚠️ 85% of customers find the package at reception or with a neighbor who received it by mistake.
+            </p>
           </div>
 
           {/* Actions */}

@@ -4584,26 +4584,19 @@ const ResolutionHub = () => {
       />
       <div 
         id="chargemind-resolution-hub-container"
-        className="chargemind-resolution-hub min-h-screen px-4 pt-12 pb-10 font-sans"
+        className="chargemind-resolution-hub min-h-screen px-4 pt-6 pb-10 font-sans"
         style={{
           ...cssVars,
           fontSize: '16px',
           lineHeight: '1.5',
           maxWidth: '100%',
           overflowX: 'hidden',
-          backgroundColor: '#F8F9FA', /* Cinza claro similar ao sistema */
+          backgroundColor: '#F8F9FA',
         }}
       >
-        <div 
-          className="mx-auto w-full max-w-[500px]"
-          style={{
-            boxSizing: 'border-box',
-          }}
-        >
+        <div className="mx-auto w-full max-w-[500px]">
           {/* Step Progress Indicator - espaçamento consistente para todas as etapas */}
-          {showItemNotReceivedFlow ? (
-            <div className="h-1.5 mb-6" />
-          ) : (
+          {!showItemNotReceivedFlow && (
             <div className="flex justify-center gap-1.5 mb-6">
               {[1, 2, 3, 4, 5, 6].map((step) => (
                 <div
@@ -4621,30 +4614,9 @@ const ResolutionHub = () => {
 
           {renderHeader()}
 
-        <Card 
-          className="shadow-lg"
-          style={{
-            maxWidth: '100%',
-            width: '100%',
-            flexShrink: 0,
-            boxSizing: 'border-box',
-            border: '1px solid #E5E7EB', /* gray-200 - mais sutil */
-            borderRadius: '0.75rem', /* 12px - igual ao sistema */
-            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)', /* shadow-lg */
-          }}
-        >
-          <CardContent 
-            style={{
-              maxWidth: '100%',
-              boxSizing: 'border-box',
-              paddingTop: '28px',
-              paddingBottom: '28px',
-              paddingLeft: '0px',
-              paddingRight: '0px',
-            }}
-          >
-            {showItemNotReceivedFlow && order ? (
-              <div className="px-4 md:px-0">
+          <Card className="shadow-lg mt-6 w-full border border-gray-200 rounded-xl">
+            <CardContent className="p-6 md:p-7">
+              {showItemNotReceivedFlow && order ? (
                 <ItemNotReceivedFlow
                   order={order}
                   primaryColor={storeSettings.brand_color || "#1B966C"}
@@ -4655,24 +4627,22 @@ const ResolutionHub = () => {
                     setCurrentStep(3);
                   }}
                   onComplete={() => {
-                    // Ao completar Step 2, fecha o componente e vai para Step 4 original
                     setShowItemNotReceivedFlow(false);
                     setCurrentStep(4);
                   }}
                 />
-              </div>
-            ) : (
-              <>
-                {currentStep === 1 && renderStep1()}
-                {currentStep === 2 && renderStep2()}
-                {currentStep === 3 && renderStep3()}
-                {currentStep === 4 && renderStep4()}
-                {currentStep === 5 && renderStep5()}
-                {currentStep === 6 && renderStep6()}
-              </>
-            )}
-          </CardContent>
-        </Card>
+              ) : (
+                <>
+                  {currentStep === 1 && renderStep1()}
+                  {currentStep === 2 && renderStep2()}
+                  {currentStep === 3 && renderStep3()}
+                  {currentStep === 4 && renderStep4()}
+                  {currentStep === 5 && renderStep5()}
+                  {currentStep === 6 && renderStep6()}
+                </>
+              )}
+            </CardContent>
+          </Card>
 
         <div className="text-center mt-8">
           <p style={{ fontSize: '12px', color: '#9CA3AF', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
