@@ -217,20 +217,22 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
         </div>
       </div>
 
-      <Button
-        className="w-full h-12 shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        style={{
-          backgroundColor: primaryColor,
-          color: primaryTextColor,
-        }}
-        disabled={!allCheckboxesChecked}
-        onClick={() => {
-          // When completing Step 2, closes component and returns to original Step 4
-          if (onComplete) onComplete();
-        }}
-      >
-        Continue
-      </Button>
+      <div className="flex flex-col items-center">
+        <Button
+          className="chargemind-primary-button w-[85%] shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{
+            backgroundColor: primaryColor,
+            color: primaryTextColor,
+          }}
+          disabled={!allCheckboxesChecked}
+          onClick={() => {
+            // When completing Step 2, closes component and returns to original Step 4
+            if (onComplete) onComplete();
+          }}
+        >
+          Continue
+        </Button>
+      </div>
     </div>
   );
 
