@@ -158,7 +158,8 @@ function buildHtml(payload: { shop: string; branding: Record<string, unknown>; u
       background-color: #F8F9FA !important;
       color: #1A1A1A !important;
       min-height: 80vh;
-      padding: 20px 0;
+      padding: 0 0 20px 0;
+      margin: 0 !important;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
   </style>
