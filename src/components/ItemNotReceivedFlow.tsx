@@ -322,13 +322,15 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
             </div>
           </div>
 
-          {/* Alert/Tip */}
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-amber-800 font-medium">
-                85% of customers find the package at reception or with a neighbor who received it by mistake.
-              </p>
+          {/* Alert/Tip - mesma largura do card de informações */}
+          <div className="md:px-3">
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-amber-800 font-medium">
+                  85% of customers find the package at reception or with a neighbor who received it by mistake.
+                </p>
+              </div>
             </div>
           </div>
 
