@@ -2,6 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================================
+   CSS Variables for Resolution Hub (Proxy)
+   Design system aligned with main application
+   ============================================================================ */
+.chargemind-resolution-hub {
+  --proxy-bg: #F8F9FA;
+  --proxy-card-bg: #FFFFFF;
+  --proxy-border: #E5E7EB;
+  --proxy-border-strong: #D1D5DB;
+  --proxy-text-primary: #111827;
+  --proxy-text-secondary: #6B7280;
+  --proxy-text-muted: #9CA3AF;
+  --proxy-radius: 0.75rem;
+  --proxy-radius-lg: 10px;
+  --proxy-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --proxy-shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+}
+
 /* Reset escopado apenas para o container raiz do proxy */
 /* Protege o tema da loja Shopify de ser afetado pelo CSS do proxy */
 #chargemind-proxy-root h1,
@@ -12,6 +30,31 @@
 #chargemind-proxy-root h6 {
   font-size: inherit;
   font-weight: inherit;
+}
+
+/* ============================================================================
+   Input Focus States - Aligned with main system
+   ============================================================================ */
+.chargemind-resolution-hub input:focus {
+  outline: none;
+  border-color: var(--primary-color, #1B966C) !important;
+  box-shadow: 0 0 0 3px rgba(27, 150, 108, 0.1) !important;
+}
+
+.chargemind-resolution-hub input:hover:not(:focus) {
+  border-color: #9CA3AF !important;
+}
+
+/* ============================================================================
+   Button Hover States
+   ============================================================================ */
+.chargemind-resolution-hub button:not(:disabled):hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+.chargemind-resolution-hub button:not(:disabled):active {
+  transform: translateY(0);
 }
 
 /* ============================================================================
@@ -40,7 +83,7 @@
 .chargemind-resolution-hub .or-divider::after {
   content: '';
   flex: 1;
-  border-bottom: 1px solid #d1d5db; /* gray-300 */
+  border-bottom: 1px solid #E5E7EB; /* gray-200 - mais sutil */
 }
 
 .chargemind-resolution-hub .or-divider span {
@@ -54,13 +97,13 @@
   font-weight: 500;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: #9ca3af; /* gray-400 */
+  color: #9CA3AF; /* gray-400 */
 }
 
 /* Responsividade: Desktop: 13px */
 @media (min-width: 768px) {
   .chargemind-resolution-hub .or-divider .chargemind-or-text {
-    font-size: 13px;
+    font-size: 12px;
   }
 }
 
@@ -68,5 +111,23 @@
 @media (max-width: 640px) {
   .chargemind-resolution-hub .or-divider span {
     padding: 0 0.75rem; /* 12px de cada lado */
+  }
+}
+
+/* ============================================================================
+   Card Animations
+   ============================================================================ */
+.chargemind-resolution-hub .animate-in {
+  animation: fadeSlideIn 0.3s ease-out forwards;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
