@@ -255,7 +255,7 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
   // Se in_transit, retorna IMEDIATAMENTE a tela de Gestão de Expectativa
   if (order.status === "in_transit") {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="space-y-6">
         <Card className="border-gray-200 shadow-sm rounded-lg p-6 md:p-8">
           {renderExpectationManagement()}
         </Card>
@@ -263,41 +263,25 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
     );
   }
 
-  // Se delivered, renderiza o fluxo de Authority Check
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
+    <div className="space-y-6">
       {step === 1 && (
         <>
-          {/* Ícone, Badge e Título - Fora do Card */}
-          <div className="space-y-6 mb-6">
-            <div className="flex items-center justify-center">
-              <div
-                className="rounded-full p-4"
-                style={{ backgroundColor: `${primaryColor}15` }}
-              >
-                <CheckCircle className="h-12 w-12" style={{ color: primaryColor }} />
-              </div>
+          {/* Ícone, Badge e Título - Estilo igual ao "We found your order!" */}
+          <div className="text-center mb-6">
+            <div 
+              className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 animate-in zoom-in duration-300"
+              style={{ 
+                backgroundColor: "#25B079",
+                boxShadow: "0 4px 12px rgba(16, 185, 129, 0.15)"
+              }}
+            >
+              <CheckCircle className="h-8 w-8 text-white" />
             </div>
-
-            {/* Status Badge */}
-            <div className="flex justify-center">
-              <span
-                className="px-4 py-1.5 rounded-full text-sm font-semibold"
-                style={{
-                  backgroundColor: "#ECFDF5",
-                  color: "#059669",
-                }}
-              >
-                Delivered
-              </span>
-            </div>
-
-            {/* Title */}
-            <div className="text-center space-y-2">
-              <h2 className="text-2xl font-semibold text-gray-900">
-                The carrier confirms delivery.
-              </h2>
-            </div>
+            <h2 className="chargemind-step-title">Delivered</h2>
+            <p className="chargemind-step-subtitle">
+              The carrier confirms delivery
+            </p>
           </div>
 
           {/* Conteúdo fora do card */}
