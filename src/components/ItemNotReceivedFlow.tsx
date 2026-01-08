@@ -2,14 +2,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  CheckCircle,
-  AlertTriangle,
-  Clock,
-  Package,
-  MapPin,
-  Truck,
-} from "lucide-react";
+import { CheckCircle, AlertTriangle, Clock, Package, MapPin, Truck } from "lucide-react";
 
 // Tipo Order importado do ResolutionHub (deve ser compatível)
 type OrderStatus = "delivered" | "in_transit" | "cancelled" | "refunded" | "pending";
@@ -69,8 +62,7 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
   });
 
   // Verificar se todos os checkboxes estão marcados
-  const allCheckboxesChecked =
-    checkboxes.neighbors && checkboxes.reception && checkboxes.mailbox;
+  const allCheckboxesChecked = checkboxes.neighbors && checkboxes.reception && checkboxes.mailbox;
 
   const handleCheckboxChange = (key: keyof typeof checkboxes) => {
     setCheckboxes((prev) => ({
@@ -136,9 +128,7 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
       </div>
 
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-semibold text-gray-900">
-          Your order is on the way.
-        </h2>
+        <h2 className="text-2xl font-semibold text-gray-900">Your order is on the way.</h2>
         <p className="text-gray-600">
           The original estimate is still valid. Sometimes there are small delays in sorting.
         </p>
@@ -172,12 +162,8 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
       </div>
 
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-semibold text-gray-900">
-          Before continuing
-        </h2>
-        <p className="text-gray-600">
-          Please check the following locations before proceeding:
-        </p>
+        <h2 className="text-2xl font-semibold text-gray-900">Before continuing</h2>
+        <p className="text-gray-600">Please check the following locations before proceeding:</p>
       </div>
 
       <Card className="border-yellow-200 bg-yellow-50 shadow-sm">
@@ -190,12 +176,8 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
                 className="mt-0.5"
               />
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">
-                  I checked with neighbors
-                </p>
-                <p className="text-xs text-gray-600 mt-0.5">
-                  The product may have been delivered to a nearby address
-                </p>
+                <p className="text-sm font-medium text-gray-900">I checked with neighbors</p>
+                <p className="text-xs text-gray-600 mt-0.5">The product may have been delivered to a nearby address</p>
               </div>
             </label>
 
@@ -206,12 +188,8 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
                 className="mt-0.5"
               />
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">
-                  I checked at reception/concierge
-                </p>
-                <p className="text-xs text-gray-600 mt-0.5">
-                  The product may be stored at the building's reception
-                </p>
+                <p className="text-sm font-medium text-gray-900">I checked at reception/concierge</p>
+                <p className="text-xs text-gray-600 mt-0.5">The product may be stored at the building's reception</p>
               </div>
             </label>
 
@@ -222,12 +200,8 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
                 className="mt-0.5"
               />
               <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">
-                  I checked the mailbox
-                </p>
-                <p className="text-xs text-gray-600 mt-0.5">
-                  Small products may have been left in the mailbox
-                </p>
+                <p className="text-sm font-medium text-gray-900">I checked the mailbox</p>
+                <p className="text-xs text-gray-600 mt-0.5">Small products may have been left in the mailbox</p>
               </div>
             </label>
           </div>
@@ -256,9 +230,7 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
   if (order.status === "in_transit") {
     return (
       <div className="space-y-6">
-        <Card className="border-gray-200 shadow-sm rounded-lg p-6 md:p-8">
-          {renderExpectationManagement()}
-        </Card>
+        <Card className="border-gray-200 shadow-sm rounded-lg p-6 md:p-8">{renderExpectationManagement()}</Card>
       </div>
     );
   }
@@ -289,7 +261,7 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
               <div className="order-tracking-header">
                 <div className="order-tracking-header-left">
                   <p className="order-tracking-label">ORDER</p>
-                  <p className="order-tracking-number">#{order.orderNumber || order.id?.replace('#', '') || 'N/A'}</p>
+                  <p className="order-tracking-number">#{order.orderNumber || order.id?.replace("#", "") || "N/A"}</p>
                   <p className="order-tracking-customer">{order.customerName}</p>
                 </div>
                 <span className="order-tracking-status order-tracking-status-delivered">Delivered</span>
@@ -326,8 +298,8 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
           <div className="md:px-3">
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
               <div className="flex items-start gap-4">
-                <AlertTriangle className="chargemind-tip-icon text-amber-600 mt-0.5 flex-shrink-0" />
-                <p className="chargemind-tip-text text-amber-800 font-medium">
+                <AlertTriangle className="h-6 w-6 text-amber-600 mt-0.5 flex-shrink-0" />
+                <p className="text-[15px] text-amber-800 font-medium leading-normal">
                   85% of customers find the package at reception or with a neighbor who received it by mistake.
                 </p>
               </div>
@@ -347,21 +319,13 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
               I'll check again
             </Button>
 
-            <button
-              type="button"
-              className="chargemind-text-link-not-order"
-              onClick={() => setStep(2)}
-            >
+            <button type="button" className="chargemind-text-link-not-order" onClick={() => setStep(2)}>
               I didn't receive it, I need help
             </button>
           </div>
         </>
       )}
-      {step === 2 && (
-        <Card className="border-gray-200 shadow-sm rounded-lg p-6 md:p-8">
-          {renderStep2()}
-        </Card>
-      )}
+      {step === 2 && <Card className="border-gray-200 shadow-sm rounded-lg p-6 md:p-8">{renderStep2()}</Card>}
     </div>
   );
 };
