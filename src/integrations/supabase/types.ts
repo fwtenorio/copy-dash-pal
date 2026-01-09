@@ -296,6 +296,18 @@ export type Database = {
         Returns: Database["public"]["Enums"]["user_level"]
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      list_user_sessions: {
+        Args: { p_user_id: string }
+        Returns: {
+          id: string
+          ip: string
+          user_agent: string
+        }[]
+      }
+      revoke_user_session: {
+        Args: { p_session_id: string; p_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       user_level: "admin" | "manager" | "user"
