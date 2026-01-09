@@ -134,18 +134,20 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
         </p>
       </div>
 
-      <Button
-        className="w-full h-11 shadow-sm hover:shadow-md transition-all"
-        style={{
-          backgroundColor: primaryColor,
-          color: primaryTextColor,
-        }}
-        onClick={() => {
-          if (onClose) onClose();
-        }}
-      >
-        Got it, I'll wait
-      </Button>
+      <div className="flex flex-col items-center gap-3">
+        <Button
+          className="chargemind-primary-button w-[85%] shadow-sm hover:shadow-md transition-all"
+          style={{
+            backgroundColor: primaryColor,
+            color: primaryTextColor,
+          }}
+          onClick={() => {
+            if (onClose) onClose();
+          }}
+        >
+          Got it, I'll wait
+        </Button>
+      </div>
     </div>
   );
 
