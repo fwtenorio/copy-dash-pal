@@ -1172,10 +1172,17 @@ const ResolutionHub = () => {
     setLoadingBranding(true);
     try {
       const windowSettings = resolveSettings();
-      const isLocalDev = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
       
-      if (isLocalDev) {
+      // Verifica se o branding do CHARGEMIND_DATA está vazio/null
+      const hasBrandingFromWindow = windowSettings.brand_color && 
+        String(windowSettings.brand_color).trim() !== "" &&
+        windowSettings.brand_color !== "#1B966C"; // fallback mockSettings
+      
+      // Se não tem branding válido do window, busca do Supabase
+      if (!hasBrandingFromWindow) {
+        console.log("🔧 Branding não encontrado no CHARGEMIND_DATA, buscando do Supabase...");
         const supabaseSettings = await fetchBrandingFromSupabase();
+        console.log("🔧 Branding do Supabase:", supabaseSettings);
         setStoreSettings({ ...windowSettings, ...supabaseSettings });
       } else {
         setStoreSettings(windowSettings);
