@@ -185,7 +185,7 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
               checked={checkboxes.neighbors}
               onChange={() => handleCheckboxChange("neighbors")}
               className="rounded"
-              style={{ accentColor: "#1B966C", marginTop: "2px", flexShrink: 0 }}
+              style={{ accentColor: "#1B966C", marginTop: "12px", flexShrink: 0 }}
             />
             <div className="flex-1">
               <p className="text-[13px] font-bold text-gray-900">I checked with neighbors</p>
@@ -201,7 +201,7 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
               checked={checkboxes.reception}
               onChange={() => handleCheckboxChange("reception")}
               className="rounded"
-              style={{ accentColor: "#1B966C", marginTop: "2px", flexShrink: 0 }}
+              style={{ accentColor: "#1B966C", marginTop: "12px", flexShrink: 0 }}
             />
             <div className="flex-1">
               <p className="text-[13px] font-bold text-gray-900">I checked at reception/concierge</p>
@@ -217,7 +217,7 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
               checked={checkboxes.mailbox}
               onChange={() => handleCheckboxChange("mailbox")}
               className="rounded"
-              style={{ accentColor: "#1B966C", marginTop: "2px", flexShrink: 0 }}
+              style={{ accentColor: "#1B966C", marginTop: "12px", flexShrink: 0 }}
             />
             <div className="flex-1">
               <p className="text-[13px] font-bold text-gray-900">I checked the mailbox</p>
