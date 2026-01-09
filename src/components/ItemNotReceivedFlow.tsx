@@ -170,7 +170,13 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
         <p className="chargemind-step-subtitle">Please check the following locations before proceeding:</p>
       </div>
 
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
+      <div 
+        className="rounded-xl p-5"
+        style={{
+          backgroundColor: "#FFFBEB",
+          border: "1px solid #FDE68A",
+        }}
+      >
         {/* Usa px (não rem) porque no proxy o font-size pode ser sobrescrito pelo tema da loja */}
         <div className="space-y-[16px]">
           <label className="flex items-start gap-3 cursor-pointer group">
