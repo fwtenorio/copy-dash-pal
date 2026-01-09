@@ -2153,7 +2153,7 @@ const ResolutionHub = () => {
               </div>
               <div className="flex-1" style={{ marginTop: '-5px' }}>
                 <p className="chargemind-rapid-resolution-card-title" style={{ marginBottom: '0px' }}>Product didn't arrive</p>
-                <p className="chargemind-step-subtitle chargemind-rapid-resolution-card-subtitle" style={{ marginTop: '2px', marginBottom: '0px' }}>Check delivery status or report missing items</p>
+                <p className="chargemind-step-subtitle chargemind-rapid-resolution-card-subtitle" style={{ marginTop: '2px', marginBottom: '0px' }}>Check delivery status or report<br />missing items</p>
               </div>
               <ChevronRight className="option-chevron h-5 w-5 flex-shrink-0 transition-colors" style={{ color: '#6B7280', marginTop: '3px' }} />
             </div>
