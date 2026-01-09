@@ -130,22 +130,42 @@ function resolveSettings(): StoreSettings {
 
 async function fetchBrandingFromSupabase(): Promise<Partial<StoreSettings>> {
   try {
+    // Primeiro tenta com usuário autenticado
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return {};
+    
+    let clientData: any = null;
+    
+    if (user) {
+      const { data: userRow } = await supabase
+        .from("users")
+        .select("client_id")
+        .eq("id", user.id)
+        .maybeSingle();
 
-    const { data: userRow } = await supabase
-      .from("users")
-      .select("client_id")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (!userRow?.client_id) return {};
-
-    const { data: clientData } = await supabase
-      .from("clients")
-      .select("*")
-      .eq("id", userRow.client_id)
-      .maybeSingle();
+      if (userRow?.client_id) {
+        const { data } = await supabase
+          .from("clients")
+          .select("brand_color, brand_text_color, logo_url, nome_empresa")
+          .eq("id", userRow.client_id)
+          .maybeSingle();
+        clientData = data;
+      }
+    }
+    
+    // Se não encontrou via auth, tenta buscar pelo primeiro cliente (dev mode)
+    if (!clientData) {
+      const isLocalDev = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+      if (isLocalDev) {
+        console.log("🔧 Dev mode: buscando branding do primeiro cliente disponível");
+        const { data } = await supabase
+          .from("clients")
+          .select("brand_color, brand_text_color, logo_url, nome_empresa")
+          .not("brand_color", "is", null)
+          .limit(1)
+          .maybeSingle();
+        clientData = data;
+      }
+    }
 
     if (!clientData) return {};
 
