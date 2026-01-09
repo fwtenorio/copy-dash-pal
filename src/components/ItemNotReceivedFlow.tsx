@@ -180,10 +180,12 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
         {/* Usa px (não rem) porque no proxy o font-size pode ser sobrescrito pelo tema da loja */}
         <div className="space-y-[16px]">
           <label className="flex items-start gap-3 cursor-pointer group">
-            <Checkbox
+            <input
+              type="checkbox"
               checked={checkboxes.neighbors}
-              onCheckedChange={() => handleCheckboxChange("neighbors")}
-              className="mt-6 h-[16px] w-[16px] min-h-[16px] min-w-[16px]"
+              onChange={() => handleCheckboxChange("neighbors")}
+              className="rounded"
+              style={{ accentColor: "#1B966C", marginTop: "2px", flexShrink: 0 }}
             />
             <div className="flex-1">
               <p className="text-[13px] font-bold text-gray-900">I checked with neighbors</p>
@@ -194,10 +196,12 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
           </label>
 
           <label className="flex items-start gap-3 cursor-pointer group">
-            <Checkbox
+            <input
+              type="checkbox"
               checked={checkboxes.reception}
-              onCheckedChange={() => handleCheckboxChange("reception")}
-              className="mt-6 h-[16px] w-[16px] min-h-[16px] min-w-[16px]"
+              onChange={() => handleCheckboxChange("reception")}
+              className="rounded"
+              style={{ accentColor: "#1B966C", marginTop: "2px", flexShrink: 0 }}
             />
             <div className="flex-1">
               <p className="text-[13px] font-bold text-gray-900">I checked at reception/concierge</p>
@@ -208,10 +212,12 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
           </label>
 
           <label className="flex items-start gap-3 cursor-pointer group">
-            <Checkbox
+            <input
+              type="checkbox"
               checked={checkboxes.mailbox}
-              onCheckedChange={() => handleCheckboxChange("mailbox")}
-              className="mt-6 h-[16px] w-[16px] min-h-[16px] min-w-[16px]"
+              onChange={() => handleCheckboxChange("mailbox")}
+              className="rounded"
+              style={{ accentColor: "#1B966C", marginTop: "2px", flexShrink: 0 }}
             />
             <div className="flex-1">
               <p className="text-[13px] font-bold text-gray-900">I checked the mailbox</p>
