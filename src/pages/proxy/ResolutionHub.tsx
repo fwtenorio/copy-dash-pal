@@ -1758,6 +1758,7 @@ const ResolutionHub = () => {
                 setOrderInput(value);
               }
             }}
+            className="placeholder:text-gray-400"
             style={{
               height: '52px',
               borderRadius: '10px',
@@ -1808,6 +1809,7 @@ const ResolutionHub = () => {
                 setEmailInput(value);
               }
             }}
+            className="placeholder:text-gray-400"
             style={{
               height: '52px',
               borderRadius: '10px',
