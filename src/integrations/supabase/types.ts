@@ -42,6 +42,9 @@ export type Database = {
           paypal_connected_at: string | null
           paypal_secret: string | null
           refund_policy_url: string | null
+          sender_email_footer: string | null
+          sender_from_name: string | null
+          sender_reply_to_email: string | null
           settings_updated_at: string | null
           shopify_access_token: string | null
           shopify_connected_at: string | null
@@ -90,6 +93,9 @@ export type Database = {
           paypal_connected_at?: string | null
           paypal_secret?: string | null
           refund_policy_url?: string | null
+          sender_email_footer?: string | null
+          sender_from_name?: string | null
+          sender_reply_to_email?: string | null
           settings_updated_at?: string | null
           shopify_access_token?: string | null
           shopify_connected_at?: string | null
@@ -138,6 +144,9 @@ export type Database = {
           paypal_connected_at?: string | null
           paypal_secret?: string | null
           refund_policy_url?: string | null
+          sender_email_footer?: string | null
+          sender_from_name?: string | null
+          sender_reply_to_email?: string | null
           settings_updated_at?: string | null
           shopify_access_token?: string | null
           shopify_connected_at?: string | null
