@@ -316,8 +316,14 @@ export const ItemNotReceivedFlow: React.FC<ItemNotReceivedFlowProps> = ({
           </div>
 
           {/* Alert/Tip - mesma largura do card de informações */}
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
-            <p className="chargemind-tip-text text-amber-800 font-medium">
+          <div 
+            className="rounded-xl p-5"
+            style={{
+              backgroundColor: "#FFFBEB",
+              border: "1px solid #FDE68A",
+            }}
+          >
+            <p className="chargemind-tip-text font-medium" style={{ color: "#92400E" }}>
               ⚠️ 85% of customers find the package at reception or with a neighbor who received it by mistake.
             </p>
           </div>
