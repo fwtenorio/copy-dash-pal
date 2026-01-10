@@ -27,6 +27,8 @@ import {
   Search,
   ThumbsDown,
   X,
+  ImageIcon,
+  ExternalLink,
 } from "lucide-react";
 import {
   Dialog,
@@ -35,6 +37,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState } from "react";
 import {
@@ -46,6 +55,36 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { format } from "date-fns";
+
+// Evidence data interface
+interface EvidenceData {
+  photos?: string[];
+  description?: string;
+  checked_carrier?: boolean;
+  checked_neighbors?: boolean;
+  product_opened?: boolean;
+  product_packaging?: string;
+  family_purchase?: boolean;
+  chargeback_initiated?: boolean;
+}
+
+// Request interface
+interface RequestData {
+  id: string;
+  orderNumber: string;
+  customer: string;
+  email: string;
+  problemType: string;
+  decision: string | null;
+  status: string;
+  value: number;
+  date: string;
+  protocol: string;
+  evidence?: EvidenceData;
+  preferredResolution?: string;
+}
 
 // Mock data for the dashboard
 const mockRequestsData = {
@@ -84,7 +123,16 @@ const mockRequestsData = {
       status: "completed",
       value: 125.00,
       date: "2024-03-12",
-      protocol: "CM-2024-001234"
+      protocol: "CM-2024-001234",
+      preferredResolution: "credit",
+      evidence: {
+        description: "Meu pedido foi marcado como entregue, mas não recebi nada. Já verifiquei com vizinhos e portaria e ninguém viu o pacote. Entrei em contato com a transportadora mas não obtive resposta.",
+        checked_carrier: true,
+        checked_neighbors: true,
+        photos: [
+          "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400",
+        ]
+      }
     },
     { 
       id: "REQ-002", 
@@ -96,7 +144,17 @@ const mockRequestsData = {
       status: "inReview",
       value: 89.50,
       date: "2024-03-11",
-      protocol: "CM-2024-001235"
+      protocol: "CM-2024-001235",
+      preferredResolution: "refund",
+      evidence: {
+        description: "O produto chegou com defeito de fábrica. A tela está arranhada e há um problema no botão de ligar. Produto veio lacrado, então o defeito é de origem.",
+        product_opened: true,
+        product_packaging: "original",
+        photos: [
+          "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=400",
+          "https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=400",
+        ]
+      }
     },
     { 
       id: "REQ-003", 
@@ -108,7 +166,16 @@ const mockRequestsData = {
       status: "pending",
       value: 245.00,
       date: "2024-03-10",
-      protocol: "CM-2024-001236"
+      protocol: "CM-2024-001236",
+      preferredResolution: "credit",
+      evidence: {
+        description: "Gostaria de trocar o produto por outro tamanho. O produto está em perfeitas condições, apenas não serviu.",
+        product_opened: true,
+        product_packaging: "original",
+        photos: [
+          "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400",
+        ]
+      }
     },
     { 
       id: "REQ-004", 
@@ -120,7 +187,13 @@ const mockRequestsData = {
       status: "pending",
       value: 59.80,
       date: "2024-03-09",
-      protocol: "CM-2024-001237"
+      protocol: "CM-2024-001237",
+      preferredResolution: "refund",
+      evidence: {
+        description: "Não reconheço essa cobrança no meu cartão. Não fiz essa compra e ninguém da minha família também.",
+        family_purchase: false,
+        chargeback_initiated: false,
+      }
     },
     { 
       id: "REQ-005", 
@@ -132,9 +205,15 @@ const mockRequestsData = {
       status: "completed",
       value: 156.40,
       date: "2024-03-08",
-      protocol: "CM-2024-001238"
+      protocol: "CM-2024-001238",
+      preferredResolution: "refund",
+      evidence: {
+        description: "Pedido consta como entregue mas nunca recebi. Moro em condomínio fechado e a portaria não recebeu nenhum pacote.",
+        checked_carrier: true,
+        checked_neighbors: true,
+      }
     },
-  ],
+  ] as RequestData[],
 };
 
 const problemTypeIcons: Record<string, React.ElementType> = {
@@ -172,12 +251,28 @@ const statusConfig: Record<string, { icon: React.ElementType; bgColor: string; i
   refundProcessed: { icon: CreditCard, bgColor: "bg-gray-100", iconColor: "text-gray-600", label: "refundProcessed" },
 };
 
+// Problem type labels for sheet display
+const problemTypeLabels: Record<string, string> = {
+  notReceived: "Not Received",
+  defect: "Defective Product",
+  returnExchange: "Return/Exchange",
+  chargeQuestion: "Unrecognized Charge",
+};
+
 export default function RefundRequest() {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusModalOpen, setStatusModalOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
   const [modalSearchTerm, setModalSearchTerm] = useState("");
+  const [selectedRequest, setSelectedRequest] = useState<RequestData | null>(null);
+  const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  const handleRequestClick = (request: RequestData) => {
+    setSelectedRequest(request);
+    setIsDetailSheetOpen(true);
+  };
 
   const filteredRequests = mockRequestsData.recentRequests.filter(
     (req) =>
@@ -386,7 +481,11 @@ export default function RefundRequest() {
                     {getRequestsByStatus(selectedStatus).map((request) => {
                       const ProblemIcon = problemTypeIcons[request.problemType];
                       return (
-                        <TableRow key={request.id}>
+                        <TableRow 
+                          key={request.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => handleRequestClick(request)}
+                        >
                           <TableCell className="font-medium">{request.orderNumber}</TableCell>
                           <TableCell>
                             <div>
@@ -419,7 +518,7 @@ export default function RefundRequest() {
                           <TableCell className="font-medium">${request.value.toFixed(2)}</TableCell>
                           <TableCell className="text-muted-foreground">{request.date}</TableCell>
                           <TableCell className="text-right">
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleRequestClick(request); }}>
                               <Eye className="h-4 w-4" />
                             </Button>
                           </TableCell>
@@ -438,6 +537,248 @@ export default function RefundRequest() {
             </ScrollArea>
           </DialogContent>
         </Dialog>
+
+        {/* Request Detail Sheet */}
+        <Sheet open={isDetailSheetOpen} onOpenChange={setIsDetailSheetOpen}>
+          <SheetContent className="w-full sm:max-w-xl flex flex-col p-0">
+            {selectedRequest && (
+              <>
+                {/* Header */}
+                <SheetHeader className="px-6 py-5 border-b bg-muted/30">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <SheetTitle className="text-xl flex items-center gap-2">
+                        <Package className="h-5 w-5" />
+                        Order {selectedRequest.orderNumber}
+                      </SheetTitle>
+                      <SheetDescription className="mt-1.5 flex items-center gap-2">
+                        <Mail className="h-3.5 w-3.5" />
+                        {selectedRequest.email}
+                      </SheetDescription>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-semibold">
+                        ${selectedRequest.value.toFixed(2)}
+                      </div>
+                      <div className="text-xs text-muted-foreground font-mono">
+                        {selectedRequest.protocol}
+                      </div>
+                    </div>
+                  </div>
+                </SheetHeader>
+
+                {/* Scrollable Content */}
+                <ScrollArea className="flex-1">
+                  <div className="px-6 py-5 space-y-6">
+                    {/* Section A: Request Details */}
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                        {t("refundRequestDashboard.requestDetails", { defaultValue: "Request Details" })}
+                      </h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground">{t("refundRequestDashboard.table.problemType")}</p>
+                          <div className="flex items-center gap-2">
+                            {(() => {
+                              const ProblemIcon = problemTypeIcons[selectedRequest.problemType];
+                              return (
+                                <>
+                                  <div className={`p-1 rounded ${problemTypeColors[selectedRequest.problemType]}`}>
+                                    <ProblemIcon className="h-4 w-4" />
+                                  </div>
+                                  <span className="font-medium">{problemTypeLabels[selectedRequest.problemType] || selectedRequest.problemType}</span>
+                                </>
+                              );
+                            })()}
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground">{t("refundRequestDashboard.preferredResolution", { defaultValue: "Preferred Resolution" })}</p>
+                          <p className="font-medium capitalize">{selectedRequest.preferredResolution || "-"}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground">{t("refundRequestDashboard.table.customer")}</p>
+                          <p className="font-medium">{selectedRequest.customer}</p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-xs text-muted-foreground">{t("refundRequestDashboard.table.date")}</p>
+                          <p className="font-medium">{selectedRequest.date}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Additional Context for "Not Received" */}
+                    {selectedRequest.problemType === "notReceived" && selectedRequest.evidence && (
+                      <div className="space-y-3">
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                          {t("refundRequestDashboard.customerVerification", { defaultValue: "Customer Verification" })}
+                        </h3>
+                        <div className="rounded-lg border bg-muted/20 p-4 space-y-2 text-sm">
+                          <div className="flex items-center justify-between">
+                            <span>{t("refundRequestDashboard.checkedWithCarrier", { defaultValue: "Checked with carrier" })}</span>
+                            <Badge variant={selectedRequest.evidence.checked_carrier ? "default" : "outline"}>
+                              {selectedRequest.evidence.checked_carrier ? t("common.yes", { defaultValue: "Yes" }) : t("common.no", { defaultValue: "No" })}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span>{t("refundRequestDashboard.checkedWithNeighbors", { defaultValue: "Checked with neighbors" })}</span>
+                            <Badge variant={selectedRequest.evidence.checked_neighbors ? "default" : "outline"}>
+                              {selectedRequest.evidence.checked_neighbors ? t("common.yes", { defaultValue: "Yes" }) : t("common.no", { defaultValue: "No" })}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Additional Context for "Defect" or "Return" */}
+                    {(selectedRequest.problemType === "defect" || selectedRequest.problemType === "returnExchange") && selectedRequest.evidence && (
+                      <div className="space-y-3">
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                          {t("refundRequestDashboard.productCondition", { defaultValue: "Product Condition" })}
+                        </h3>
+                        <div className="rounded-lg border bg-muted/20 p-4 space-y-2 text-sm">
+                          <div className="flex items-center justify-between">
+                            <span>{t("refundRequestDashboard.productOpened", { defaultValue: "Product was opened" })}</span>
+                            <Badge variant={selectedRequest.evidence.product_opened ? "default" : "outline"}>
+                              {selectedRequest.evidence.product_opened ? t("common.yes", { defaultValue: "Yes" }) : t("common.no", { defaultValue: "No" })}
+                            </Badge>
+                          </div>
+                          {selectedRequest.evidence.product_packaging && (
+                            <div className="flex items-center justify-between">
+                              <span>{t("refundRequestDashboard.packaging", { defaultValue: "Packaging" })}</span>
+                              <Badge variant="outline" className="capitalize">
+                                {selectedRequest.evidence.product_packaging}
+                              </Badge>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Additional Context for "Charge Question" */}
+                    {selectedRequest.problemType === "chargeQuestion" && selectedRequest.evidence && (
+                      <div className="space-y-3">
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                          {t("refundRequestDashboard.chargeVerification", { defaultValue: "Charge Verification" })}
+                        </h3>
+                        <div className="rounded-lg border bg-muted/20 p-4 space-y-2 text-sm">
+                          <div className="flex items-center justify-between">
+                            <span>{t("refundRequestDashboard.familyPurchase", { defaultValue: "Family member purchase" })}</span>
+                            <Badge variant={selectedRequest.evidence.family_purchase ? "default" : "outline"}>
+                              {selectedRequest.evidence.family_purchase ? t("common.yes", { defaultValue: "Yes" }) : t("common.no", { defaultValue: "No" })}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span>{t("refundRequestDashboard.chargebackInitiated", { defaultValue: "Chargeback initiated" })}</span>
+                            <Badge variant={selectedRequest.evidence.chargeback_initiated ? "destructive" : "outline"}>
+                              {selectedRequest.evidence.chargeback_initiated ? t("common.yes", { defaultValue: "Yes" }) : t("common.no", { defaultValue: "No" })}
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Section B: Evidence */}
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
+                        <FileText className="h-4 w-4" />
+                        {t("refundRequestDashboard.evidence", { defaultValue: "Evidence" })}
+                      </h3>
+                      
+                      {/* Description */}
+                      {selectedRequest.evidence?.description && (
+                        <div className="rounded-lg border bg-muted/20 p-4">
+                          <p className="text-sm whitespace-pre-wrap">
+                            {selectedRequest.evidence.description}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Photos Grid */}
+                      {selectedRequest.evidence?.photos && selectedRequest.evidence.photos.length > 0 ? (
+                        <div className="grid grid-cols-3 gap-3">
+                          {selectedRequest.evidence.photos.map((photo, index) => (
+                            <button
+                              key={index}
+                              onClick={() => setSelectedImage(photo)}
+                              className="aspect-square rounded-lg border bg-muted/30 overflow-hidden hover:ring-2 hover:ring-primary transition-all group relative"
+                            >
+                              <img
+                                src={photo}
+                                alt={`Evidence ${index + 1}`}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = "/placeholder.svg";
+                                }}
+                              />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                <ExternalLink className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="rounded-lg border border-dashed bg-muted/10 p-6 text-center">
+                          <ImageIcon className="h-8 w-8 mx-auto text-muted-foreground/50 mb-2" />
+                          <p className="text-sm text-muted-foreground">{t("refundRequestDashboard.noPhotos", { defaultValue: "No photos submitted" })}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Current Status */}
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                        {t("refundRequestDashboard.currentStatus", { defaultValue: "Current Status" })}
+                      </h3>
+                      <div className="rounded-lg border bg-muted/20 p-4 text-center">
+                        <Badge className={`${statusColors[selectedRequest.status]} text-sm px-3 py-1`}>
+                          {t(`refundRequestDashboard.statuses.${selectedRequest.status}`)}
+                        </Badge>
+                        {selectedRequest.decision && (
+                          <p className="text-sm text-muted-foreground mt-2">
+                            {t("refundRequestDashboard.decisionMade", { defaultValue: "Decision" })}: 
+                            <span className="font-medium capitalize ml-1">{selectedRequest.decision}</span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </ScrollArea>
+
+                {/* Footer Actions */}
+                <div className="border-t bg-muted/30 px-6 py-4">
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => setIsDetailSheetOpen(false)}
+                  >
+                    {t("common.close", { defaultValue: "Close" })}
+                  </Button>
+                </div>
+              </>
+            )}
+          </SheetContent>
+        </Sheet>
+
+        {/* Full-size Image Modal */}
+        {selectedImage && (
+          <div 
+            className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4"
+            onClick={() => setSelectedImage(null)}
+          >
+            <button 
+              className="absolute top-4 right-4 text-white/80 hover:text-white"
+              onClick={() => setSelectedImage(null)}
+            >
+              <XCircle className="h-8 w-8" />
+            </button>
+            <img
+              src={selectedImage}
+              alt="Evidence full size"
+              className="max-w-full max-h-[90vh] object-contain rounded-lg"
+            />
+          </div>
+        )}
 
         {/* Problem Categories + Resolution Outcomes */}
         <div className="grid gap-6 lg:grid-cols-2">
