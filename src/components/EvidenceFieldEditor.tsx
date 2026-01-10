@@ -307,16 +307,28 @@ export function EvidenceFieldEditor() {
   const fetchFields = useCallback(async () => {
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      console.log("[EvidenceFieldEditor] Starting fetchFields...");
+      
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      console.log("[EvidenceFieldEditor] Auth user:", user?.id, "Error:", authError);
+      
+      if (!user) {
+        console.log("[EvidenceFieldEditor] No user found, returning early");
+        return;
+      }
 
-      const { data: userRow } = await supabase
+      const { data: userRow, error: userError } = await supabase
         .from("users")
         .select("client_id")
         .eq("id", user.id)
         .maybeSingle();
 
-      if (!userRow?.client_id) return;
+      console.log("[EvidenceFieldEditor] User row:", userRow, "Error:", userError);
+
+      if (!userRow?.client_id) {
+        console.log("[EvidenceFieldEditor] No client_id found, returning early");
+        return;
+      }
       setClientId(userRow.client_id);
 
       const { data, error } = await supabase
@@ -325,16 +337,20 @@ export function EvidenceFieldEditor() {
         .eq("client_id", userRow.client_id)
         .order("display_order", { ascending: true });
 
+      console.log("[EvidenceFieldEditor] Evidence fields fetched:", data?.length, "Error:", error);
+
       if (error) throw error;
 
       // Se não houver dados, seed com os campos predefinidos
       if (!data || data.length === 0) {
+        console.log("[EvidenceFieldEditor] No fields found, seeding predefined fields...");
         await seedPredefinedFields(userRow.client_id);
       } else {
+        console.log("[EvidenceFieldEditor] Setting fields:", data.length);
         setFields(data.map(toFieldConfig));
       }
     } catch (error) {
-      console.error("Error fetching evidence fields:", error);
+      console.error("[EvidenceFieldEditor] Error fetching evidence fields:", error);
       toast.error("Failed to load evidence field configurations");
     } finally {
       setLoading(false);
