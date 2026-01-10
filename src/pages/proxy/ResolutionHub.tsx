@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,9 +21,11 @@ import {
   Upload,
   Info,
   XCircle,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/safeClient";
+import { DynamicEvidenceField, EvidenceFieldConfig } from "@/components/DynamicEvidenceField";
 import { toast, Toaster as Sonner } from "sonner";
 import { ItemNotReceivedFlow } from "@/components/ItemNotReceivedFlow";
 
@@ -935,7 +937,7 @@ const ResolutionHub = () => {
   // Step 4: Resolution decision
   const [decision, setDecision] = useState<ResolutionDecision>(null);
   
-  // Step 5: Evidências
+  // Step 5: Evidências - Estados legados mantidos para compatibilidade
   const [description, setDescription] = useState("");
   const [photos, setPhotos] = useState<File[]>([]);
   const [checkedNeighbors, setCheckedNeighbors] = useState<boolean | null>(null);
@@ -951,6 +953,11 @@ const ResolutionHub = () => {
   const [submitting, setSubmitting] = useState(false);
   const [evidenceError, setEvidenceError] = useState<string | null>(null);
   
+  // Campos dinâmicos do banco de dados
+  const [evidenceFields, setEvidenceFields] = useState<EvidenceFieldConfig[]>([]);
+  const [evidenceValues, setEvidenceValues] = useState<Record<string, any>>({});
+  const [loadingFields, setLoadingFields] = useState(false);
+  
   // Step 6: Confirmação
   const [creditCode, setCreditCode] = useState("");
   const [protocol, setProtocol] = useState("");
@@ -961,6 +968,213 @@ const ResolutionHub = () => {
   // Controle de navegação
   const [currentStep, setCurrentStep] = useState<CurrentStep>(1);
   const [showItemNotReceivedFlow, setShowItemNotReceivedFlow] = useState(false);
+  
+  // Predefined fields como fallback (mesmo formato do EvidenceFieldEditor)
+  const PREDEFINED_FIELDS: Record<string, Omit<EvidenceFieldConfig, 'id' | 'client_id'>[]> = {
+    not_received: [
+      { problem_type: 'not_received', field_key: 'description', field_label: 'Describe the problem in detail', field_type: 'textarea', is_predefined: true, is_visible: true, is_required: true, options: null, display_order: 0 },
+      { problem_type: 'not_received', field_key: 'checked_neighbors', field_label: 'Did you check with neighbors, reception, or family members?', field_type: 'checkbox', is_predefined: true, is_visible: true, is_required: false, options: null, display_order: 1 },
+      { problem_type: 'not_received', field_key: 'checked_carrier', field_label: 'Did you contact the carrier?', field_type: 'checkbox', is_predefined: true, is_visible: true, is_required: false, options: null, display_order: 2 },
+      { problem_type: 'not_received', field_key: 'photos', field_label: 'Delivery area photo or carrier proof', field_type: 'file', is_predefined: true, is_visible: true, is_required: true, options: null, display_order: 3 },
+    ],
+    defect: [
+      { problem_type: 'defect', field_key: 'description', field_label: 'Describe the problem in detail', field_type: 'textarea', is_predefined: true, is_visible: true, is_required: true, options: null, display_order: 0 },
+      { problem_type: 'defect', field_key: 'defect_type', field_label: 'What is the problem?', field_type: 'select', is_predefined: true, is_visible: true, is_required: true, options: [
+        { value: 'danificado', label: 'Damaged' },
+        { value: 'diferente', label: 'Different from advertised' },
+        { value: 'nao_funciona', label: "Doesn't work" },
+        { value: 'outro', label: 'Other' },
+      ], display_order: 1 },
+      { problem_type: 'defect', field_key: 'photos', field_label: 'Product photos showing the issue', field_type: 'file', is_predefined: true, is_visible: true, is_required: true, options: null, display_order: 2 },
+    ],
+    regret: [
+      { problem_type: 'regret', field_key: 'description', field_label: 'Describe the problem in detail', field_type: 'textarea', is_predefined: true, is_visible: true, is_required: true, options: null, display_order: 0 },
+      { problem_type: 'regret', field_key: 'product_opened', field_label: 'Was the product opened/used?', field_type: 'radio', is_predefined: true, is_visible: true, is_required: true, options: [{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }], display_order: 1 },
+      { problem_type: 'regret', field_key: 'product_packaging', field_label: 'Is the product in original packaging?', field_type: 'radio', is_predefined: true, is_visible: true, is_required: true, options: [{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }], display_order: 2 },
+      { problem_type: 'regret', field_key: 'regret_reason', field_label: 'Reason for return', field_type: 'select', is_predefined: true, is_visible: true, is_required: true, options: [
+        { value: 'mudei_ideia', label: 'Changed my mind' },
+        { value: 'nao_serviu', label: "Didn't fit" },
+        { value: 'nao_gostei', label: "Didn't like it" },
+        { value: 'outro', label: 'Other' },
+      ], display_order: 3 },
+      { problem_type: 'regret', field_key: 'photos', field_label: 'Product photos', field_type: 'file', is_predefined: true, is_visible: true, is_required: true, options: null, display_order: 4 },
+    ],
+    fraud: [
+      { problem_type: 'fraud', field_key: 'description', field_label: 'Describe the problem in detail', field_type: 'textarea', is_predefined: true, is_visible: true, is_required: true, options: null, display_order: 0 },
+      { problem_type: 'fraud', field_key: 'recognize_address', field_label: 'Do you recognize this address?', field_type: 'text', is_predefined: true, is_visible: true, is_required: true, options: null, display_order: 1 },
+      { problem_type: 'fraud', field_key: 'family_purchase', field_label: 'Was this purchase made by a family member?', field_type: 'radio', is_predefined: true, is_visible: true, is_required: true, options: [{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }], display_order: 2 },
+      { problem_type: 'fraud', field_key: 'chargeback_initiated', field_label: 'Have you already disputed with your card/bank?', field_type: 'radio', is_predefined: true, is_visible: true, is_required: true, options: [{ value: 'yes', label: 'Yes' }, { value: 'no', label: 'No' }], display_order: 3 },
+      { problem_type: 'fraud', field_key: 'chargeback_protocol', field_label: 'Dispute protocol', field_type: 'text', is_predefined: true, is_visible: true, is_required: false, options: null, display_order: 4 },
+      { problem_type: 'fraud', field_key: 'photos', field_label: 'Proof (card statement, police report, etc)', field_type: 'file', is_predefined: true, is_visible: true, is_required: true, options: null, display_order: 5 },
+    ],
+    cancel: [
+      { problem_type: 'cancel', field_key: 'description', field_label: 'Describe the reason for cancellation', field_type: 'textarea', is_predefined: true, is_visible: true, is_required: true, options: null, display_order: 0 },
+    ],
+  };
+  
+  // Helper para parsear options do banco
+  const parseFieldOptions = (options: unknown): { value: string; label: string }[] | null => {
+    if (!options) return null;
+    if (Array.isArray(options)) {
+      return options as { value: string; label: string }[];
+    }
+    return null;
+  };
+  
+  // Função para buscar campos de evidência do banco
+  const fetchEvidenceFields = useCallback(async (problemType: string) => {
+    setLoadingFields(true);
+    try {
+      // Obtém client_id do CHARGEMIND_DATA ou do auth
+      let clientId: string | null = null;
+      
+      // Tenta primeiro do CHARGEMIND_DATA
+      const data = (window as Window & { CHARGEMIND_DATA?: any }).CHARGEMIND_DATA;
+      if (data?.client_id) {
+        clientId = data.client_id;
+      } else if (data?.branding?.client_id) {
+        clientId = data.branding.client_id;
+      }
+      
+      // Se não encontrou, tenta pelo auth
+      if (!clientId) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: userRow } = await supabase
+            .from("users")
+            .select("client_id")
+            .eq("id", user.id)
+            .maybeSingle();
+          if (userRow?.client_id) {
+            clientId = userRow.client_id;
+          }
+        }
+      }
+      
+      // Busca no Supabase se tiver client_id
+      if (clientId) {
+        const { data: fieldsData, error } = await supabase
+          .from("evidence_field_configs")
+          .select("*")
+          .eq("client_id", clientId)
+          .eq("problem_type", problemType)
+          .eq("is_visible", true)
+          .order("display_order", { ascending: true });
+        
+        if (!error && fieldsData && fieldsData.length > 0) {
+          const parsedFields: EvidenceFieldConfig[] = fieldsData.map((f: any) => ({
+            id: f.id,
+            client_id: f.client_id,
+            problem_type: f.problem_type,
+            field_key: f.field_key,
+            field_label: f.field_label,
+            field_type: f.field_type,
+            is_predefined: f.is_predefined,
+            is_visible: f.is_visible,
+            is_required: f.is_required,
+            options: parseFieldOptions(f.options),
+            display_order: f.display_order,
+          }));
+          
+          console.log("🔍 Evidence fields loaded from DB:", parsedFields.length);
+          setEvidenceFields(parsedFields);
+          
+          // Inicializa valores com estados legados existentes
+          const initialValues: Record<string, any> = {};
+          parsedFields.forEach(field => {
+            switch(field.field_key) {
+              case 'description': initialValues[field.field_key] = description; break;
+              case 'photos': initialValues[field.field_key] = photos; break;
+              case 'checked_neighbors': initialValues[field.field_key] = checkedNeighbors; break;
+              case 'checked_carrier': initialValues[field.field_key] = checkedCarrier; break;
+              case 'product_opened': initialValues[field.field_key] = productOpened; break;
+              case 'product_packaging': initialValues[field.field_key] = productPackaging; break;
+              case 'recognize_address': initialValues[field.field_key] = recognizeAddress; break;
+              case 'family_purchase': initialValues[field.field_key] = familyPurchase; break;
+              case 'chargeback_initiated': initialValues[field.field_key] = chargebackInitiated; break;
+              case 'chargeback_protocol': initialValues[field.field_key] = chargebackProtocol; break;
+              case 'defect_type': initialValues[field.field_key] = defectType; break;
+              case 'regret_reason': initialValues[field.field_key] = regretReason; break;
+              default: initialValues[field.field_key] = null;
+            }
+          });
+          setEvidenceValues(initialValues);
+          setLoadingFields(false);
+          return;
+        }
+      }
+      
+      // Fallback: usa campos predefinidos
+      console.log("🔍 Using fallback predefined fields for:", problemType);
+      const fallbackFields = PREDEFINED_FIELDS[problemType] || PREDEFINED_FIELDS['cancel'];
+      const fieldsWithIds: EvidenceFieldConfig[] = fallbackFields.map((f, idx) => ({
+        ...f,
+        id: `fallback-${problemType}-${idx}`,
+        client_id: clientId || 'fallback',
+      }));
+      setEvidenceFields(fieldsWithIds);
+      
+      // Inicializa valores
+      const initialValues: Record<string, any> = {};
+      fieldsWithIds.forEach(field => {
+        switch(field.field_key) {
+          case 'description': initialValues[field.field_key] = description; break;
+          case 'photos': initialValues[field.field_key] = photos; break;
+          case 'checked_neighbors': initialValues[field.field_key] = checkedNeighbors; break;
+          case 'checked_carrier': initialValues[field.field_key] = checkedCarrier; break;
+          case 'product_opened': initialValues[field.field_key] = productOpened; break;
+          case 'product_packaging': initialValues[field.field_key] = productPackaging; break;
+          case 'recognize_address': initialValues[field.field_key] = recognizeAddress; break;
+          case 'family_purchase': initialValues[field.field_key] = familyPurchase; break;
+          case 'chargeback_initiated': initialValues[field.field_key] = chargebackInitiated; break;
+          case 'chargeback_protocol': initialValues[field.field_key] = chargebackProtocol; break;
+          case 'defect_type': initialValues[field.field_key] = defectType; break;
+          case 'regret_reason': initialValues[field.field_key] = regretReason; break;
+          default: initialValues[field.field_key] = null;
+        }
+      });
+      setEvidenceValues(initialValues);
+    } catch (error) {
+      console.error("Error fetching evidence fields:", error);
+      // Fallback em caso de erro
+      const fallbackFields = PREDEFINED_FIELDS[problemType] || PREDEFINED_FIELDS['cancel'];
+      const fieldsWithIds: EvidenceFieldConfig[] = fallbackFields.map((f, idx) => ({
+        ...f,
+        id: `fallback-${problemType}-${idx}`,
+        client_id: 'fallback',
+      }));
+      setEvidenceFields(fieldsWithIds);
+    }
+    setLoadingFields(false);
+  }, [description, photos, checkedNeighbors, checkedCarrier, productOpened, productPackaging, recognizeAddress, familyPurchase, chargebackInitiated, chargebackProtocol, defectType, regretReason]);
+  
+  // Busca campos quando a rota mudar
+  useEffect(() => {
+    if (route && currentStep === 4) {
+      fetchEvidenceFields(route);
+    }
+  }, [route, currentStep]);
+  
+  // Handler para atualizar valores de campos dinâmicos
+  const handleEvidenceValueChange = useCallback((fieldKey: string, value: any) => {
+    setEvidenceValues(prev => ({ ...prev, [fieldKey]: value }));
+    
+    // Sincroniza com estados legados para compatibilidade
+    switch(fieldKey) {
+      case 'description': setDescription(value || ''); break;
+      case 'photos': setPhotos(value || []); break;
+      case 'checked_neighbors': setCheckedNeighbors(value); break;
+      case 'checked_carrier': setCheckedCarrier(value); break;
+      case 'product_opened': setProductOpened(value); break;
+      case 'product_packaging': setProductPackaging(value); break;
+      case 'recognize_address': setRecognizeAddress(value || ''); break;
+      case 'family_purchase': setFamilyPurchase(value); break;
+      case 'chargeback_initiated': setChargebackInitiated(value); break;
+      case 'chargeback_protocol': setChargebackProtocol(value || ''); break;
+      case 'defect_type': setDefectType(value || ''); break;
+      case 'regret_reason': setRegretReason(value || ''); break;
+    }
+  }, []);
 
   // Função para rolar para o topo - isolada e reutilizável (versão mais agressiva para produção)
   const scrollToTop = () => {
@@ -2355,11 +2569,11 @@ const ResolutionHub = () => {
     );
   };
 
-  // STEP 4 - Evidence Collection (Moved from Step 5 - Now MANDATORY for all)
+  // STEP 4 - Evidence Collection (Dynamic Fields from Database)
   const renderStep4 = () => {
     if (!route) return null;
 
-    const routeContexts = {
+    const routeContexts: Record<string, { title: string; context: string }> = {
       not_received: {
         title: "Tell us what happened",
         context: "Help us understand the situation to resolve your case quickly.",
@@ -2382,7 +2596,16 @@ const ResolutionHub = () => {
       },
     };
 
-    const currentContext = routeContexts[route];
+    const currentContext = routeContexts[route] || routeContexts.cancel;
+
+    // Renderiza campos condicionais (chargeback_protocol só aparece se chargeback_initiated = true)
+    const shouldShowField = (field: EvidenceFieldConfig): boolean => {
+      // Campo chargeback_protocol só aparece se chargeback_initiated for true
+      if (field.field_key === 'chargeback_protocol') {
+        return evidenceValues['chargeback_initiated'] === true;
+      }
+      return true;
+    };
 
     return (
       <form onSubmit={handleEvidenceSubmit} className="space-y-6" style={{ padding: '20px' }}>
@@ -2391,401 +2614,30 @@ const ResolutionHub = () => {
           <p className="chargemind-step-subtitle">{currentContext.context}</p>
         </div>
 
-        {/* Descrição detalhada - OBRIGATÓRIA PARA TODOS */}
-        <div>
-          <label className="chargemind-field-label block mb-2" style={{ fontWeight: '600' }}>
-            Describe the problem in detail <span className="text-red-600">*</span>
-          </label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="Explain in detail what happened (minimum 10 characters)"
-            className="chargemind-textarea-field w-full min-h-[120px]"
-            required
-          />
-          <p className={classNames(
-            "text-xs font-medium mt-1.5 chargemind-character-counter",
-            description.length < 10 ? "text-[#6B7280]" : "text-green-600"
-          )}>
-            {description.length}/10 characters {description.length >= 10 && "✓"}
-          </p>
-        </div>
-
-        {/* Campos específicos por rota */}
-        {route === "not_received" && (
-          <>
-            <div className="space-y-3">
-              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <label className="flex items-start gap-2 chargemind-field-label" style={{ fontWeight: '500' }}>
-                  <input
-                    type="checkbox"
-                    checked={checkedNeighbors ?? false}
-                    onChange={(e) => setCheckedNeighbors(e.target.checked)}
-                    className="rounded"
-                    style={{ accentColor: primaryColor, marginTop: '2px', flexShrink: 0 }}
-                  />
-                  Did you check with neighbors, reception, or family members?
-                </label>
-              </div>
-
-              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <label className="flex items-start gap-2 chargemind-field-label" style={{ fontWeight: '500' }}>
-                  <input
-                    type="checkbox"
-                    checked={checkedCarrier ?? false}
-                    onChange={(e) => setCheckedCarrier(e.target.checked)}
-                    className="rounded"
-                    style={{ accentColor: primaryColor, marginTop: '2px', flexShrink: 0 }}
-                  />
-                  Did you contact the carrier?
-                </label>
-              </div>
-            </div>
-
-            <div>
-              <label className="chargemind-field-label block mb-2">
-                Delivery area photo or carrier proof <span className="text-red-600">*</span>
-              </label>
-              <label
-                htmlFor="upload-photos-step4-not-received"
-                className="relative flex flex-col items-center justify-center w-full min-h-[140px] border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200 group"
-                style={{
-                  borderColor: photos.length > 0 ? hexToRgba(primaryColor, 0.4) : '#D1D5DB',
-                  backgroundColor: photos.length > 0 ? hexToRgba(primaryColor, 0.03) : '#FAFAFA',
-                  boxShadow: photos.length > 0 ? `0 1px 3px ${hexToRgba(primaryColor, 0.1)}` : 'none'
-                }}
-              >
-                <input
-                  id="upload-photos-step4-not-received"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(e) => setPhotos(Array.from(e.target.files || []))}
-                  className="hidden"
-                />
-                <div className="flex flex-col items-center justify-center px-6 py-8">
-                  <div 
-                    className="p-4 rounded-full mb-3 transition-all"
-                    style={{ 
-                      backgroundColor: photos.length > 0 ? hexToRgba(primaryColor, 0.15) : hexToRgba(primaryColor, 0.1),
-                      transform: photos.length > 0 ? 'scale(1.05)' : 'scale(1)'
-                    }}
-                  >
-                    <Upload className="h-7 w-7" style={{ color: primaryColor }} />
-                  </div>
-                  <p className="mb-1.5 chargemind-field-label" style={{ fontWeight: '600', color: '#111827' }}>
-                    {photos.length > 0 ? (
-                      <span style={{ color: primaryColor }}>{photos.length} file(s) selected</span>
-                    ) : (
-                      <>
-                        <span className="underline" style={{ color: primaryColor }}>Click to upload</span>
-                        <span className="chargemind-step-subtitle"> or drag files here</span>
-                      </>
-                    )}
-                  </p>
-                  <p className="chargemind-helper-text mt-1">PNG, JPG or GIF (max. 10MB per file)</p>
-                </div>
-              </label>
-            </div>
-          </>
+        {/* Loading state */}
+        {loadingFields && (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin" style={{ color: primaryColor }} />
+            <span className="ml-2 chargemind-step-subtitle">Loading form...</span>
+          </div>
         )}
 
-        {route === "defect" && (
-          <>
-            <div>
-              <label className="chargemind-field-label block mb-1">
-                What is the problem? <span className="text-red-600">*</span>
-              </label>
-              <select
-                value={defectType}
-                onChange={(e) => setDefectType(e.target.value)}
-                className="chargemind-select-field w-full"
-              >
-                <option value="">Select...</option>
-                <option value="danificado">Damaged</option>
-                <option value="diferente">Different from advertised</option>
-                <option value="nao_funciona">Doesn't work</option>
-                <option value="outro">Other</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="chargemind-field-label block mb-2">
-                Product photos showing the issue <span className="text-red-600">*</span>
-              </label>
-              <label
-                htmlFor="upload-photos-step4-defect"
-                className="relative flex flex-col items-center justify-center w-full min-h-[140px] border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200 group"
-                style={{
-                  borderColor: photos.length > 0 ? hexToRgba(primaryColor, 0.4) : '#D1D5DB',
-                  backgroundColor: photos.length > 0 ? hexToRgba(primaryColor, 0.03) : '#FAFAFA',
-                }}
-              >
-                <input
-                  id="upload-photos-step4-defect"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(e) => setPhotos(Array.from(e.target.files || []))}
-                  className="hidden"
+        {/* Dynamic Fields from Database */}
+        {!loadingFields && evidenceFields.length > 0 && (
+          <div className="space-y-5">
+            {evidenceFields
+              .filter(field => field.is_visible && shouldShowField(field))
+              .map((field) => (
+                <DynamicEvidenceField
+                  key={field.id}
+                  field={field}
+                  value={evidenceValues[field.field_key]}
+                  onChange={(value) => handleEvidenceValueChange(field.field_key, value)}
+                  primaryColor={primaryColor}
+                  hexToRgba={hexToRgba}
                 />
-                <div className="flex flex-col items-center justify-center px-6 py-8">
-                  <div 
-                    className="p-4 rounded-full mb-3 transition-all"
-                    style={{ backgroundColor: hexToRgba(primaryColor, 0.1) }}
-                  >
-                    <Upload className="h-7 w-7" style={{ color: primaryColor }} />
-                  </div>
-                  <p className="mb-1.5 chargemind-field-label" style={{ fontWeight: '600', color: '#111827' }}>
-                    {photos.length > 0 ? (
-                      <span style={{ color: primaryColor }}>{photos.length} file(s) selected</span>
-                    ) : (
-                      <span className="underline" style={{ color: primaryColor }}>Click to upload</span>
-                    )}
-                  </p>
-                </div>
-              </label>
-            </div>
-          </>
-        )}
-
-        {route === "regret" && (
-          <>
-            <div className="space-y-3">
-              <div>
-                <label className="chargemind-field-label block mb-2">
-                  Was the product opened/used? <span className="text-red-600">*</span>
-                </label>
-                <div className="flex gap-3">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="opened"
-                      checked={productOpened === true}
-                      onChange={() => setProductOpened(true)}
-                      style={{ accentColor: primaryColor }}
-                    />
-                    <span className="chargemind-step-subtitle">Yes</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="opened"
-                      checked={productOpened === false}
-                      onChange={() => setProductOpened(false)}
-                      style={{ accentColor: primaryColor }}
-                    />
-                    <span className="chargemind-step-subtitle">No</span>
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <label className="chargemind-field-label block mb-2">
-                  Is the product in original packaging? <span className="text-red-600">*</span>
-                </label>
-                <div className="flex gap-3">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="packaging"
-                      checked={productPackaging === true}
-                      onChange={() => setProductPackaging(true)}
-                      style={{ accentColor: primaryColor }}
-                    />
-                    <span className="chargemind-step-subtitle">Yes</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="packaging"
-                      checked={productPackaging === false}
-                      onChange={() => setProductPackaging(false)}
-                      style={{ accentColor: primaryColor }}
-                    />
-                    <span className="chargemind-step-subtitle">No</span>
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <label className="chargemind-field-label block mb-1">
-                  Reason for return <span className="text-red-600">*</span>
-                </label>
-                <select
-                  value={regretReason}
-                  onChange={(e) => setRegretReason(e.target.value)}
-                  className="chargemind-select-field w-full"
-                >
-                  <option value="">Select...</option>
-                  <option value="mudei_ideia">Changed my mind</option>
-                  <option value="nao_serviu">Didn't fit</option>
-                  <option value="nao_gostei">Didn't like it</option>
-                  <option value="outro">Other</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="chargemind-field-label block mb-2">
-                Product photos <span className="text-red-600">*</span>
-              </label>
-              <label
-                htmlFor="upload-photos-step4-regret"
-                className="relative flex flex-col items-center justify-center w-full min-h-[140px] border-2 border-dashed rounded-xl cursor-pointer"
-                style={{
-                  borderColor: photos.length > 0 ? hexToRgba(primaryColor, 0.4) : '#D1D5DB',
-                  backgroundColor: photos.length > 0 ? hexToRgba(primaryColor, 0.03) : '#FAFAFA',
-                }}
-              >
-                <input
-                  id="upload-photos-step4-regret"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(e) => setPhotos(Array.from(e.target.files || []))}
-                  className="hidden"
-                />
-                <div className="flex flex-col items-center justify-center px-6 py-8">
-                  <div className="p-4 rounded-full mb-3" style={{ backgroundColor: hexToRgba(primaryColor, 0.1) }}>
-                    <Upload className="h-7 w-7" style={{ color: primaryColor }} />
-                  </div>
-                  <p className="mb-1.5 chargemind-field-label" style={{ fontWeight: '600', color: '#111827' }}>
-                    {photos.length > 0 ? (
-                      <span style={{ color: primaryColor }}>{photos.length} file(s) selected</span>
-                    ) : (
-                      <span className="underline" style={{ color: primaryColor }}>Click to upload</span>
-                    )}
-                  </p>
-                </div>
-              </label>
-            </div>
-          </>
-        )}
-
-        {route === "fraud" && (
-          <>
-            <div className="space-y-3">
-              <div>
-                <label className="chargemind-field-label block mb-1">
-                  Do you recognize this address? <span className="text-red-600">*</span>
-                </label>
-                <Input
-                  type="text"
-                  value={recognizeAddress}
-                  onChange={(e) => setRecognizeAddress(e.target.value)}
-                  placeholder="Type your response"
-                  className="chargemind-input-field h-[60px] input-field"
-                />
-              </div>
-
-              <div>
-                <label className="chargemind-field-label block mb-2">
-                  Was this purchase made by a family member? <span className="text-red-600">*</span>
-                </label>
-                <div className="flex gap-3">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="family"
-                      checked={familyPurchase === true}
-                      onChange={() => setFamilyPurchase(true)}
-                      style={{ accentColor: primaryColor }}
-                    />
-                    <span className="chargemind-step-subtitle">Yes</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="family"
-                      checked={familyPurchase === false}
-                      onChange={() => setFamilyPurchase(false)}
-                      style={{ accentColor: primaryColor }}
-                    />
-                    <span className="chargemind-step-subtitle">No</span>
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <label className="chargemind-field-label block mb-2">
-                  Have you already disputed with your card/bank? <span className="text-red-600">*</span>
-                </label>
-                <div className="flex gap-3">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="chargeback"
-                      checked={chargebackInitiated === true}
-                      onChange={() => setChargebackInitiated(true)}
-                      style={{ accentColor: primaryColor }}
-                    />
-                    <span className="chargemind-step-subtitle">Yes</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="chargeback"
-                      checked={chargebackInitiated === false}
-                      onChange={() => setChargebackInitiated(false)}
-                      style={{ accentColor: primaryColor }}
-                    />
-                    <span className="chargemind-step-subtitle">No</span>
-                  </label>
-                </div>
-              </div>
-
-              {chargebackInitiated && (
-                <div>
-                  <label className="chargemind-field-label block mb-1">
-                    Dispute protocol <span className="text-red-600">*</span>
-                  </label>
-                  <Input
-                    type="text"
-                    value={chargebackProtocol}
-                    onChange={(e) => setChargebackProtocol(e.target.value)}
-                    placeholder="Ex: PROT-123456"
-                    className="chargemind-input-field h-[60px] input-field"
-                  />
-                </div>
-              )}
-            </div>
-
-            <div>
-              <label className="chargemind-field-label block mb-2">
-                Proof (card statement, police report, etc) <span className="text-red-600">*</span>
-              </label>
-              <label
-                htmlFor="upload-photos-step4-fraud"
-                className="relative flex flex-col items-center justify-center w-full min-h-[140px] border-2 border-dashed rounded-xl cursor-pointer"
-                style={{
-                  borderColor: photos.length > 0 ? hexToRgba(primaryColor, 0.4) : '#D1D5DB',
-                  backgroundColor: photos.length > 0 ? hexToRgba(primaryColor, 0.03) : '#FAFAFA',
-                }}
-              >
-                <input
-                  id="upload-photos-step4-fraud"
-                  type="file"
-                  accept="image/*,application/pdf"
-                  multiple
-                  onChange={(e) => setPhotos(Array.from(e.target.files || []))}
-                  className="hidden"
-                />
-                <div className="flex flex-col items-center justify-center px-6 py-8">
-                  <div className="p-4 rounded-full mb-3" style={{ backgroundColor: hexToRgba(primaryColor, 0.1) }}>
-                    <Upload className="h-7 w-7" style={{ color: primaryColor }} />
-                  </div>
-                  <p className="mb-1.5 chargemind-field-label" style={{ fontWeight: '600', color: '#111827' }}>
-                    {photos.length > 0 ? (
-                      <span style={{ color: primaryColor }}>{photos.length} file(s) selected</span>
-                    ) : (
-                      <span className="underline" style={{ color: primaryColor }}>Click to upload</span>
-                    )}
-                  </p>
-                </div>
-              </label>
-            </div>
-          </>
+              ))}
+          </div>
         )}
 
         {evidenceError && (
@@ -2802,6 +2654,7 @@ const ResolutionHub = () => {
         <div className="flex justify-center">
           <Button
             type="submit"
+            disabled={loadingFields}
             className="chargemind-primary-button w-full shadow-sm hover:shadow-md transition-all"
             style={{ backgroundColor: primaryColor, color: primaryTextColor }}
           >
