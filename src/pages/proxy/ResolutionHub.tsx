@@ -4624,14 +4624,21 @@ const ResolutionHub = () => {
         }}
       >
         <div className="mx-auto w-full max-w-[500px]">
-          {/* Step Progress Indicator - espaçamento consistente para todas as etapas */}
+          {/* Step Progress Indicator - inline styles para funcionar em produção Shopify */}
           {!showItemNotReceivedFlow && (
-            <div className="flex justify-center gap-1.5 mb-6">
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '6px',
+              marginBottom: '24px',
+            }}>
               {[1, 2, 3, 4, 5, 6].map((step) => (
                 <div
                   key={step}
-                  className="h-1.5 rounded-full transition-all duration-300"
                   style={{
+                    height: '6px',
+                    borderRadius: '9999px',
+                    transition: 'all 0.3s ease',
                     width: step === currentStep ? '24px' : '8px',
                     backgroundColor: step <= currentStep ? primaryColor : '#E5E7EB',
                     opacity: step < currentStep ? 0.6 : 1,
