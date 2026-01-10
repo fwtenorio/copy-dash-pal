@@ -19,6 +19,7 @@ import Alerts from "./pages/Alerts";
 import Avoid from "./pages/Avoid";
 import Charges from "./pages/Charges";
 import RefundRequest from "./pages/RefundRequest";
+import RefundRequestsByStatus from "./pages/RefundRequestsByStatus";
 import Admin from "./pages/Admin";
 import AdminResolutions from "./pages/AdminResolutions";
 import NotFound from "./pages/NotFound";
@@ -312,6 +313,7 @@ const App = () => {
               <Route path="/alertas" element={<Alerts />} />
               <Route path="/cobrancas" element={<Charges />} />
               <Route path="/refund-request" element={<RefundRequest />} />
+              <Route path="/refund-request/:status" element={<RefundRequestsByStatus />} />
               <Route path="/integracoes" element={<Integrations />} />
               <Route path="/evitar" element={<Avoid />} />
               <Route path="/notificacoes" element={<Notifications />} />
