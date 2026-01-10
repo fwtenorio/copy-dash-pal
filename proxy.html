@@ -44,6 +44,10 @@
       // Simula os dados que a Edge Function injeta
       // Em desenvolvimento local, o ResolutionHub buscará do Supabase se estiver logado
       // Caso contrário, usa os dados mockados abaixo
+      // Em desenvolvimento local: mock=true por default, ?mock=false para desativar
+      const mockParam = new URLSearchParams(window.location.search).get('mock');
+      const useMockData = mockParam !== null ? mockParam === 'true' : true; // Default: true em desenvolvimento
+      
       window.CHARGEMIND_DATA = {
         shop: "loja-teste.myshopify.com",
         branding: {
@@ -54,8 +58,10 @@
           logo_url: null,
           heading: null
         },
-        useMockData: new URLSearchParams(window.location.search).get('mock') === 'true'
+        useMockData: useMockData
       };
+      
+      console.log("🧪 Ambiente de desenvolvimento - Mock Data:", useMockData ? "ATIVADO ✅" : "DESATIVADO (use ?mock=true para ativar)");
       
       console.log("📦 CHARGEMIND_DATA (local):", window.CHARGEMIND_DATA);
       console.log("💡 Dica: Em localhost, o ResolutionHub busca branding do Supabase se você estiver logado");
