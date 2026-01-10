@@ -1,1 +1,4 @@
 project_id = "rhlfnrtwuyskswefzrxu"
+
+[functions.submit-dispute]
+verify_jwt = false

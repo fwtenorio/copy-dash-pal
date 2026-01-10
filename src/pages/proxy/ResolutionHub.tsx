@@ -1501,7 +1501,7 @@ const ResolutionHub = () => {
     setCurrentStep(3);
   };
 
-  // STEP 3 -> STEP 4
+  // STEP 3 -> STEP 4 (Evidence Collection - Now BEFORE Resolution Choice)
   const selectRoute = (selectedRoute: ResolutionRoute) => {
     setRoute(selectedRoute);
     
@@ -1509,31 +1509,17 @@ const ResolutionHub = () => {
     if (selectedRoute === "not_received") {
       setShowItemNotReceivedFlow(true);
     } else {
+      // Go directly to Evidence Collection (Step 4) for ALL routes
       setCurrentStep(4);
     }
   };
 
-  // STEP 4 -> STEP 5
-  const selectDecision = (selectedDecision: ResolutionDecision) => {
-    setDecision(selectedDecision);
-
-    if (selectedDecision === "credit") {
-      // Crédito imediato: gera código e pula para Step 6
-      const code = `CREDIT-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-      setCreditCode(code);
-      setCurrentStep(6);
-      } else {
-      // Refund: vai para coleta de evidências
-      setCurrentStep(5);
-    }
-  };
-
-  // STEP 5 -> STEP 6
+  // STEP 4 (Evidence) -> STEP 5 (Resolution Preference)
   const handleEvidenceSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setEvidenceError(null);
     
-    // Validação rigorosa para reembolso
+    // Validação rigorosa de evidências - MANDATORY for ALL problem types
     if (description.length < 10) {
       setEvidenceError(CM_MESSAGES.EVIDENCE.DESC_TOO_SHORT);
       return;
@@ -1542,7 +1528,7 @@ const ResolutionHub = () => {
     if (route === "not_received") {
       if (checkedNeighbors === null || checkedCarrier === null) {
         setEvidenceError(CM_MESSAGES.EVIDENCE.MISSING_FIELD);
-      return;
+        return;
       }
       if (photos.length === 0) {
         setEvidenceError(CM_MESSAGES.EVIDENCE.MISSING_PHOTO);
@@ -1553,8 +1539,8 @@ const ResolutionHub = () => {
     if (route === "defect") {
       if (photos.length === 0) {
         setEvidenceError(CM_MESSAGES.EVIDENCE.MISSING_PHOTO);
-      return;
-    }
+        return;
+      }
       if (!defectType) {
         setEvidenceError(CM_MESSAGES.EVIDENCE.MISSING_FIELD);
         return;
@@ -1587,22 +1573,73 @@ const ResolutionHub = () => {
       }
     }
     
+    // Evidence collected - move to Resolution Preference (Step 5)
+    setCurrentStep(5);
+  };
+
+  // STEP 5 (Resolution Preference) -> STEP 6 (Submit & Confirm)
+  const selectDecision = async (selectedDecision: ResolutionDecision) => {
+    setDecision(selectedDecision);
     setSubmitting(true);
-    
+
     try {
-      // Send simulation - replace with real call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Prepare evidence data
+      const evidenceData = {
+        description,
+        photos: photos.map(f => f.name), // In production, these would be uploaded URLs
+        checked_neighbors: checkedNeighbors,
+        checked_carrier: checkedCarrier,
+        defect_type: defectType || undefined,
+        product_opened: productOpened,
+        product_packaging: productPackaging,
+        regret_reason: regretReason || undefined,
+        recognize_address: recognizeAddress || undefined,
+        family_purchase: familyPurchase,
+        chargeback_initiated: chargebackInitiated,
+        chargeback_protocol: chargebackProtocol || undefined,
+      };
+
+      // Get shop from CHARGEMIND_DATA
+      const data = (window as Window & { CHARGEMIND_DATA?: { shop?: string } }).CHARGEMIND_DATA;
+      const shop = data?.shop || "demo-shop.myshopify.com";
       
-      const generatedProtocol = `REF-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-      setProtocol(generatedProtocol);
+      // Get Supabase URL
+      const supabaseUrl = (window as any).SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL || "https://rhlfnrtwuyskswefzrxu.supabase.co";
+
+      // Submit to edge function
+      const response = await fetch(`${supabaseUrl}/functions/v1/submit-dispute`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          order_id: order?.orderNumber || order?.id || "",
+          customer_email: order?.email || "",
+          customer_name: order?.customerName || "",
+          problem_type: route,
+          evidence_data: evidenceData,
+          preferred_resolution: selectedDecision,
+          order_total: order?.total || extractNumericValue(order?.totalAmount || "0"),
+          currency: order?.currency || "USD",
+          shop,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to submit request");
+      }
+
+      const result = await response.json();
+      setProtocol(result.protocol_number);
       setCurrentStep(6);
       
     } catch (error) {
+      console.error("Error submitting dispute:", error);
       setEvidenceError(CM_MESSAGES.SUBMISSION.GENERIC_ERROR);
     } finally {
       setSubmitting(false);
     }
   };
+
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -2318,197 +2355,41 @@ const ResolutionHub = () => {
     );
   };
 
+  // STEP 4 - Evidence Collection (Moved from Step 5 - Now MANDATORY for all)
   const renderStep4 = () => {
-    if (!route || !order) return null;
+    if (!route) return null;
 
     const routeContexts = {
       not_received: {
-        title: "Let's resolve this together",
-        context: order.status === "delivered" 
-          ? `We see the carrier marked as delivered on ${order.deliveryDate}. Sometimes the package is with neighbors or reception.`
-          : order.status === "in_transit"
-          ? "Your order is on the way. Let's wait for delivery before processing a refund."
-          : "We understand your concern about delivery.",
+        title: "Tell us what happened",
+        context: "Help us understand the situation to resolve your case quickly.",
       },
       defect: {
-        title: "Let's fix this",
-        context: "Product issues happen. Let's find the best solution.",
+        title: "Document the issue",
+        context: "Photos and details help us process your request faster.",
       },
       regret: {
-        title: "Your satisfaction is important",
-        context: "We understand preferences change. Let's see the options.",
+        title: "A few quick questions",
+        context: "This helps us find the best solution for you.",
       },
       cancel: {
-        title: "Cancel your order",
-        context: "We can cancel your order and process an instant refund.",
+        title: "Confirm cancellation details",
+        context: "We need a brief reason to process your cancellation.",
       },
       fraud: {
-        title: "Let's investigate",
-        context: "We take security seriously. We need to verify some details before proceeding.",
+        title: "Security verification",
+        context: "We take security seriously. Help us verify the details.",
       },
     };
 
     const currentContext = routeContexts[route];
-    const currencySymbol = extractCurrencySymbol(order.totalAmount);
-    const orderValue = extractNumericValue(order.totalAmount);
-    const creditValue = orderValue * 1.1;
-    const creditDisplay = formatCurrencyValue(creditValue, currencySymbol);
-
-    return (
-      <div className="space-y-8" style={{ padding: '20px' }}>
-        <div className="text-center">
-          <h2 className="chargemind-step-title">{currentContext.title}</h2>
-          <p className="chargemind-step-subtitle">{currentContext.context}</p>
-          </div>
-
-        {/* Opção PRIMÁRIA: Crédito - MÁXIMA HIERARQUIA VISUAL */}
-        <Card 
-          className="border-2 relative overflow-hidden shadow-lg rounded-lg"
-          style={{ 
-            borderColor: primaryColor,
-            background: `linear-gradient(135deg, ${hexToRgba(primaryColor, 0.08)} 0%, white 50%, ${hexToRgba(primaryColor, 0.08)} 100%)`,
-            boxShadow: `0 4px 12px ${hexToRgba(primaryColor, 0.15)}`,
-            borderRadius: '8px'
-          }}
-        >
-          <div 
-            className="absolute top-0 right-0 px-3 pt-2 pb-3 font-medium rounded-bl-lg z-0 chargemind-best-choice-badge"
-            style={{ backgroundColor: primaryColor, color: primaryTextColor }}
-          >
-            <span style={{ color: "#FFD700" }}>★</span> Best choice
-          </div>
-          <CardContent className="p-6 space-y-6 pt-12">
-            <div className="flex items-start gap-4">
-              <div 
-                className="p-3 rounded-xl chargemind-credit-store-icon-wrapper"
-                style={{ backgroundColor: hexToRgba(primaryColor, 0.15), marginTop: '20px' }}
-              >
-                <CreditCard className="h-6 w-6" style={{ color: primaryColor, marginTop: '3px' }} />
-              </div>
-              <div className="flex-1">
-                <h3 className="chargemind-step-title leading-tight">
-                  Store credit of {creditDisplay}
-                </h3>
-                <p className="chargemind-step-subtitle mt-3" style={{ fontWeight: '500' }}>
-                  Receive {creditDisplay} to use on any product
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              <span 
-                className="px-3 py-2 text-xs font-semibold rounded-full border chargemind-credit-badge"
-                style={{ 
-                  backgroundColor: hexToRgba(primaryColor, 0.1), 
-                  color: primaryColor,
-                  borderColor: hexToRgba(primaryColor, 0.2)
-                }}
-              >
-                ✓ Available immediately
-              </span>
-              <span 
-                className="px-3 py-2 text-xs font-semibold rounded-full border chargemind-credit-badge"
-                style={{ 
-                  backgroundColor: hexToRgba(primaryColor, 0.1), 
-                  color: primaryColor,
-                  borderColor: hexToRgba(primaryColor, 0.2)
-                }}
-              >
-                ✓ No expiration date
-              </span>
-              <span 
-                className="px-3 py-2 text-xs font-semibold rounded-full border chargemind-credit-badge"
-                style={{ 
-                  backgroundColor: hexToRgba(primaryColor, 0.1), 
-                  color: primaryColor,
-                  borderColor: hexToRgba(primaryColor, 0.2)
-                }}
-              >
-                ✓ You choose what you want
-              </span>
-            </div>
-
-            <div className="flex justify-center">
-              <Button
-                onClick={() => selectDecision("credit")}
-                className="chargemind-primary-button w-[85%] shadow-md hover:shadow-lg transition-all hover:scale-[1.02]"
-                style={{ backgroundColor: primaryColor, color: primaryTextColor }}
-              >
-            Receive {creditDisplay} in Store Credit 
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      
-
-        {/* Opção SECUNDÁRIA: Refund - MÍNIMA HIERARQUIA VISUAL */}
-        <Card className="border border-[#DEDEDE] bg-[#F9F9F9] rounded-lg" style={{ borderRadius: '8px' }}>
-          <CardContent className="p-5 space-y-4">
-            <div className="flex items-start gap-4">
-              <div className="p-2 rounded-md bg-[#E9E9E9] chargemind-refund-mail-icon-wrapper" style={{ marginTop: '14px' }}>
-                <RotateCcw className="h-5 w-5 text-[#6B7280]" />
-              </div>
-              <div className="flex-1">
-                <h3 className="chargemind-field-label" style={{ fontWeight: '600', color: '#374151' }}>
-                  Refund de {order.totalAmount}
-                </h3>
-                <p className="chargemind-step-subtitle mt-3" style={{ marginTop: '-11px' }}>
-                  Return of original amount to payment method
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              <span className="px-3 py-1.5 text-xs font-normal rounded-full bg-[#F9F9F9] text-[#6B7280] chargemind-refund-badge">
-                <span className="flex items-center gap-1.5">
-                  <Clock className="h-4 w-4" />
-                  Processed in 5-10 business days
-                </span>
-              </span>
-              <span className="px-3 py-1.5 text-xs font-normal rounded-full bg-[#F9F9F9] text-[#6B7280] chargemind-refund-badge">
-                <span className="flex items-center gap-1.5">
-                  <Info className="h-4 w-4" />
-                  Subject to review
-                </span>
-              </span>
-            </div>
-
-            <div className="flex justify-center">
-              <Button
-                onClick={() => selectDecision("refund")}
-                variant="outline"
-                className="chargemind-secondary-button w-[85%] font-medium border-[#DEDEDE] bg-white text-[#374151] hover:bg-[#F9F9F9]"
-              >
-                Request refund
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="flex justify-center">
-        <button
-          type="button"
-            onClick={() => setCurrentStep(3)}
-          className="chargemind-text-link"
-          >
-            ← Back
-        </button>
-        </div>
-            </div>
-  );
-  };
-
-  const renderStep5 = () => {
-    if (!route || decision !== "refund") return null;
 
     return (
       <form onSubmit={handleEvidenceSubmit} className="space-y-6" style={{ padding: '20px' }}>
         <div className="text-center">
-          <h2 className="chargemind-step-title">We need to understand better</h2>
-          <p className="chargemind-step-subtitle">
-            To process your refund, we need some information
-                </p>
-              </div>
+          <h2 className="chargemind-step-title">{currentContext.title}</h2>
+          <p className="chargemind-step-subtitle">{currentContext.context}</p>
+        </div>
 
         {/* Descrição detalhada - OBRIGATÓRIA PARA TODOS */}
         <div>
@@ -2518,22 +2399,22 @@ const ResolutionHub = () => {
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Explain in detail what happened (minimum 50 characters)"
+            placeholder="Explain in detail what happened (minimum 10 characters)"
             className="chargemind-textarea-field w-full min-h-[120px]"
             required
           />
           <p className={classNames(
             "text-xs font-medium mt-1.5 chargemind-character-counter",
-            description.length < 50 ? "text-[#6B7280]" : "text-green-600"
+            description.length < 10 ? "text-[#6B7280]" : "text-green-600"
           )}>
-            {description.length}/50 characters {description.length >= 50 && "✓"}
+            {description.length}/10 characters {description.length >= 10 && "✓"}
           </p>
-          </div>
+        </div>
 
         {/* Campos específicos por rota */}
         {route === "not_received" && (
           <>
-        <div className="space-y-3">
+            <div className="space-y-3">
               <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <label className="flex items-start gap-2 chargemind-field-label" style={{ fontWeight: '500' }}>
                   <input
@@ -2542,7 +2423,6 @@ const ResolutionHub = () => {
                     onChange={(e) => setCheckedNeighbors(e.target.checked)}
                     className="rounded"
                     style={{ accentColor: primaryColor, marginTop: '2px', flexShrink: 0 }}
-                    required
                   />
                   Did you check with neighbors, reception, or family members?
                 </label>
@@ -2556,7 +2436,6 @@ const ResolutionHub = () => {
                     onChange={(e) => setCheckedCarrier(e.target.checked)}
                     className="rounded"
                     style={{ accentColor: primaryColor, marginTop: '2px', flexShrink: 0 }}
-                    required
                   />
                   Did you contact the carrier?
                 </label>
@@ -2568,33 +2447,20 @@ const ResolutionHub = () => {
                 Delivery area photo or carrier proof <span className="text-red-600">*</span>
               </label>
               <label
-                htmlFor="upload-photos-not-received"
+                htmlFor="upload-photos-step4-not-received"
                 className="relative flex flex-col items-center justify-center w-full min-h-[140px] border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200 group"
                 style={{
                   borderColor: photos.length > 0 ? hexToRgba(primaryColor, 0.4) : '#D1D5DB',
                   backgroundColor: photos.length > 0 ? hexToRgba(primaryColor, 0.03) : '#FAFAFA',
                   boxShadow: photos.length > 0 ? `0 1px 3px ${hexToRgba(primaryColor, 0.1)}` : 'none'
                 }}
-                onMouseEnter={(e) => {
-                  if (photos.length === 0) {
-                    e.currentTarget.style.borderColor = hexToRgba(primaryColor, 0.5);
-                    e.currentTarget.style.backgroundColor = hexToRgba(primaryColor, 0.05);
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (photos.length === 0) {
-                    e.currentTarget.style.borderColor = '#D1D5DB';
-                    e.currentTarget.style.backgroundColor = '#FAFAFA';
-                  }
-                }}
               >
                 <input
-                  id="upload-photos-not-received"
+                  id="upload-photos-step4-not-received"
                   type="file"
                   accept="image/*"
                   multiple
                   onChange={(e) => setPhotos(Array.from(e.target.files || []))}
-                  required
                   className="hidden"
                 />
                 <div className="flex flex-col items-center justify-center px-6 py-8">
@@ -2634,57 +2500,39 @@ const ResolutionHub = () => {
                 value={defectType}
                 onChange={(e) => setDefectType(e.target.value)}
                 className="chargemind-select-field w-full"
-                required
               >
                 <option value="">Select...</option>
                 <option value="danificado">Damaged</option>
                 <option value="diferente">Different from advertised</option>
-                <option value="nao_funciona">No funciona</option>
+                <option value="nao_funciona">Doesn't work</option>
                 <option value="outro">Other</option>
               </select>
             </div>
 
             <div>
               <label className="chargemind-field-label block mb-2">
-                Product photos showing the issue (minimum 2 photos) <span className="text-red-600">*</span>
+                Product photos showing the issue <span className="text-red-600">*</span>
               </label>
               <label
-                htmlFor="upload-photos-defect"
+                htmlFor="upload-photos-step4-defect"
                 className="relative flex flex-col items-center justify-center w-full min-h-[140px] border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200 group"
                 style={{
                   borderColor: photos.length > 0 ? hexToRgba(primaryColor, 0.4) : '#D1D5DB',
                   backgroundColor: photos.length > 0 ? hexToRgba(primaryColor, 0.03) : '#FAFAFA',
-                  boxShadow: photos.length > 0 ? `0 1px 3px ${hexToRgba(primaryColor, 0.1)}` : 'none'
-                }}
-                onMouseEnter={(e) => {
-                  if (photos.length === 0) {
-                    e.currentTarget.style.borderColor = hexToRgba(primaryColor, 0.5);
-                    e.currentTarget.style.backgroundColor = hexToRgba(primaryColor, 0.05);
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (photos.length === 0) {
-                    e.currentTarget.style.borderColor = '#D1D5DB';
-                    e.currentTarget.style.backgroundColor = '#FAFAFA';
-                  }
                 }}
               >
                 <input
-                  id="upload-photos-defect"
+                  id="upload-photos-step4-defect"
                   type="file"
                   accept="image/*"
                   multiple
                   onChange={(e) => setPhotos(Array.from(e.target.files || []))}
-                  required
                   className="hidden"
                 />
                 <div className="flex flex-col items-center justify-center px-6 py-8">
                   <div 
                     className="p-4 rounded-full mb-3 transition-all"
-                    style={{ 
-                      backgroundColor: photos.length > 0 ? hexToRgba(primaryColor, 0.15) : hexToRgba(primaryColor, 0.1),
-                      transform: photos.length > 0 ? 'scale(1.05)' : 'scale(1)'
-                    }}
+                    style={{ backgroundColor: hexToRgba(primaryColor, 0.1) }}
                   >
                     <Upload className="h-7 w-7" style={{ color: primaryColor }} />
                   </div>
@@ -2692,18 +2540,11 @@ const ResolutionHub = () => {
                     {photos.length > 0 ? (
                       <span style={{ color: primaryColor }}>{photos.length} file(s) selected</span>
                     ) : (
-                      <>
-                        <span className="underline" style={{ color: primaryColor }}>Click to upload</span>
-                        <span className="chargemind-step-subtitle"> or drag files here</span>
-                      </>
+                      <span className="underline" style={{ color: primaryColor }}>Click to upload</span>
                     )}
                   </p>
-                  <p className="chargemind-helper-text mt-1">PNG, JPG or GIF (max. 10MB per file)</p>
                 </div>
               </label>
-              {photos.length > 0 && photos.length < 2 && (
-                <p className="chargemind-helper-text mt-1" style={{ color: '#DC2626' }}>⚠️ Minimum of 2 photos required</p>
-              )}
             </div>
           </>
         )}
@@ -2723,7 +2564,6 @@ const ResolutionHub = () => {
                       checked={productOpened === true}
                       onChange={() => setProductOpened(true)}
                       style={{ accentColor: primaryColor }}
-                      required
                     />
                     <span className="chargemind-step-subtitle">Yes</span>
                   </label>
@@ -2734,17 +2574,16 @@ const ResolutionHub = () => {
                       checked={productOpened === false}
                       onChange={() => setProductOpened(false)}
                       style={{ accentColor: primaryColor }}
-                      required
                     />
                     <span className="chargemind-step-subtitle">No</span>
                   </label>
-          </div>
-        </div>
+                </div>
+              </div>
 
               <div>
                 <label className="chargemind-field-label block mb-2">
                   Is the product in original packaging? <span className="text-red-600">*</span>
-          </label>
+                </label>
                 <div className="flex gap-3">
                   <label className="flex items-center gap-2">
                     <input
@@ -2753,7 +2592,6 @@ const ResolutionHub = () => {
                       checked={productPackaging === true}
                       onChange={() => setProductPackaging(true)}
                       style={{ accentColor: primaryColor }}
-                      required
                     />
                     <span className="chargemind-step-subtitle">Yes</span>
                   </label>
@@ -2764,12 +2602,11 @@ const ResolutionHub = () => {
                       checked={productPackaging === false}
                       onChange={() => setProductPackaging(false)}
                       style={{ accentColor: primaryColor }}
-                      required
                     />
                     <span className="chargemind-step-subtitle">No</span>
                   </label>
-        </div>
-      </div>
+                </div>
+              </div>
 
               <div>
                 <label className="chargemind-field-label block mb-1">
@@ -2779,72 +2616,47 @@ const ResolutionHub = () => {
                   value={regretReason}
                   onChange={(e) => setRegretReason(e.target.value)}
                   className="chargemind-select-field w-full"
-                  required
                 >
                   <option value="">Select...</option>
-                  <option value="tamanho">Size didn't fit</option>
-                  <option value="expectativa">Different from expectations</option>
-                  <option value="duplicado">Purchased by mistake/duplicate</option>
-                  <option value="outro">Other reason</option>
+                  <option value="mudei_ideia">Changed my mind</option>
+                  <option value="nao_serviu">Didn't fit</option>
+                  <option value="nao_gostei">Didn't like it</option>
+                  <option value="outro">Other</option>
                 </select>
               </div>
             </div>
 
             <div>
               <label className="chargemind-field-label block mb-2">
-                Product photo in resale condition <span className="text-red-600">*</span>
+                Product photos <span className="text-red-600">*</span>
               </label>
               <label
-                htmlFor="upload-photos-regret"
-                className="relative flex flex-col items-center justify-center w-full min-h-[140px] border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200 group"
+                htmlFor="upload-photos-step4-regret"
+                className="relative flex flex-col items-center justify-center w-full min-h-[140px] border-2 border-dashed rounded-xl cursor-pointer"
                 style={{
                   borderColor: photos.length > 0 ? hexToRgba(primaryColor, 0.4) : '#D1D5DB',
                   backgroundColor: photos.length > 0 ? hexToRgba(primaryColor, 0.03) : '#FAFAFA',
-                  boxShadow: photos.length > 0 ? `0 1px 3px ${hexToRgba(primaryColor, 0.1)}` : 'none'
-                }}
-                onMouseEnter={(e) => {
-                  if (photos.length === 0) {
-                    e.currentTarget.style.borderColor = hexToRgba(primaryColor, 0.5);
-                    e.currentTarget.style.backgroundColor = hexToRgba(primaryColor, 0.05);
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (photos.length === 0) {
-                    e.currentTarget.style.borderColor = '#D1D5DB';
-                    e.currentTarget.style.backgroundColor = '#FAFAFA';
-                  }
                 }}
               >
                 <input
-                  id="upload-photos-regret"
+                  id="upload-photos-step4-regret"
                   type="file"
                   accept="image/*"
                   multiple
                   onChange={(e) => setPhotos(Array.from(e.target.files || []))}
-                  required
                   className="hidden"
                 />
                 <div className="flex flex-col items-center justify-center px-6 py-8">
-                  <div 
-                    className="p-4 rounded-full mb-3 transition-all"
-                    style={{ 
-                      backgroundColor: photos.length > 0 ? hexToRgba(primaryColor, 0.15) : hexToRgba(primaryColor, 0.1),
-                      transform: photos.length > 0 ? 'scale(1.05)' : 'scale(1)'
-                    }}
-                  >
+                  <div className="p-4 rounded-full mb-3" style={{ backgroundColor: hexToRgba(primaryColor, 0.1) }}>
                     <Upload className="h-7 w-7" style={{ color: primaryColor }} />
                   </div>
                   <p className="mb-1.5 chargemind-field-label" style={{ fontWeight: '600', color: '#111827' }}>
                     {photos.length > 0 ? (
-                      <span style={{ color: primaryColor }}>{photos.length} photo(s) selected</span>
+                      <span style={{ color: primaryColor }}>{photos.length} file(s) selected</span>
                     ) : (
-                      <>
-                        <span className="underline" style={{ color: primaryColor }}>Click to upload</span>
-                        <span className="chargemind-step-subtitle"> or drag files here</span>
-                      </>
+                      <span className="underline" style={{ color: primaryColor }}>Click to upload</span>
                     )}
                   </p>
-                  <p className="chargemind-helper-text mt-1">PNG, JPG or GIF (max. 10MB per file)</p>
                 </div>
               </label>
             </div>
@@ -2853,37 +2665,32 @@ const ResolutionHub = () => {
 
         {route === "fraud" && (
           <>
-            <div>
-              <label className="chargemind-field-label block mb-1">
-                Do you recognize the delivery address? <span className="text-red-600">*</span>
-              </label>
-              <select
-                value={recognizeAddress}
-                onChange={(e) => setRecognizeAddress(e.target.value)}
-                className="chargemind-select-field w-full"
-                required
-              >
-                <option value="">Select...</option>
-                <option value="sim">Yes</option>
-                <option value="nao">No</option>
-                <option value="parcialmente">Partially</option>
-              </select>
-            </div>
-
             <div className="space-y-3">
               <div>
+                <label className="chargemind-field-label block mb-1">
+                  Do you recognize this address? <span className="text-red-600">*</span>
+                </label>
+                <Input
+                  type="text"
+                  value={recognizeAddress}
+                  onChange={(e) => setRecognizeAddress(e.target.value)}
+                  placeholder="Type your response"
+                  className="chargemind-input-field h-[60px] input-field"
+                />
+              </div>
+
+              <div>
                 <label className="chargemind-field-label block mb-2">
-                  Could a family member/acquaintance have made the purchase? <span className="text-red-600">*</span>
+                  Was this purchase made by a family member? <span className="text-red-600">*</span>
                 </label>
                 <div className="flex gap-3">
                   <label className="flex items-center gap-2">
-              <input
+                    <input
                       type="radio"
                       name="family"
                       checked={familyPurchase === true}
                       onChange={() => setFamilyPurchase(true)}
                       style={{ accentColor: primaryColor }}
-                      required
                     />
                     <span className="chargemind-step-subtitle">Yes</span>
                   </label>
@@ -2894,11 +2701,10 @@ const ResolutionHub = () => {
                       checked={familyPurchase === false}
                       onChange={() => setFamilyPurchase(false)}
                       style={{ accentColor: primaryColor }}
-                      required
                     />
                     <span className="chargemind-step-subtitle">No</span>
-            </label>
-          </div>
+                  </label>
+                </div>
               </div>
 
               <div>
@@ -2913,7 +2719,6 @@ const ResolutionHub = () => {
                       checked={chargebackInitiated === true}
                       onChange={() => setChargebackInitiated(true)}
                       style={{ accentColor: primaryColor }}
-                      required
                     />
                     <span className="chargemind-step-subtitle">Yes</span>
                   </label>
@@ -2924,7 +2729,6 @@ const ResolutionHub = () => {
                       checked={chargebackInitiated === false}
                       onChange={() => setChargebackInitiated(false)}
                       style={{ accentColor: primaryColor }}
-                      required
                     />
                     <span className="chargemind-step-subtitle">No</span>
                   </label>
@@ -2942,103 +2746,250 @@ const ResolutionHub = () => {
                     onChange={(e) => setChargebackProtocol(e.target.value)}
                     placeholder="Ex: PROT-123456"
                     className="chargemind-input-field h-[60px] input-field"
-                    required
                   />
                 </div>
-        )}
-      </div>
+              )}
+            </div>
 
             <div>
               <label className="chargemind-field-label block mb-2">
                 Proof (card statement, police report, etc) <span className="text-red-600">*</span>
               </label>
               <label
-                htmlFor="upload-photos-fraud"
-                className="relative flex flex-col items-center justify-center w-full min-h-[140px] border-2 border-dashed rounded-xl cursor-pointer transition-all duration-200 group"
+                htmlFor="upload-photos-step4-fraud"
+                className="relative flex flex-col items-center justify-center w-full min-h-[140px] border-2 border-dashed rounded-xl cursor-pointer"
                 style={{
                   borderColor: photos.length > 0 ? hexToRgba(primaryColor, 0.4) : '#D1D5DB',
                   backgroundColor: photos.length > 0 ? hexToRgba(primaryColor, 0.03) : '#FAFAFA',
-                  boxShadow: photos.length > 0 ? `0 1px 3px ${hexToRgba(primaryColor, 0.1)}` : 'none'
-                }}
-                onMouseEnter={(e) => {
-                  if (photos.length === 0) {
-                    e.currentTarget.style.borderColor = hexToRgba(primaryColor, 0.5);
-                    e.currentTarget.style.backgroundColor = hexToRgba(primaryColor, 0.05);
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (photos.length === 0) {
-                    e.currentTarget.style.borderColor = '#D1D5DB';
-                    e.currentTarget.style.backgroundColor = '#FAFAFA';
-                  }
                 }}
               >
                 <input
-                  id="upload-photos-fraud"
+                  id="upload-photos-step4-fraud"
                   type="file"
                   accept="image/*,application/pdf"
                   multiple
                   onChange={(e) => setPhotos(Array.from(e.target.files || []))}
-                  required
                   className="hidden"
                 />
                 <div className="flex flex-col items-center justify-center px-6 py-8">
-                  <div 
-                    className="p-4 rounded-full mb-3 transition-all"
-                    style={{ 
-                      backgroundColor: photos.length > 0 ? hexToRgba(primaryColor, 0.15) : hexToRgba(primaryColor, 0.1),
-                      transform: photos.length > 0 ? 'scale(1.05)' : 'scale(1)'
-                    }}
-                  >
+                  <div className="p-4 rounded-full mb-3" style={{ backgroundColor: hexToRgba(primaryColor, 0.1) }}>
                     <Upload className="h-7 w-7" style={{ color: primaryColor }} />
                   </div>
                   <p className="mb-1.5 chargemind-field-label" style={{ fontWeight: '600', color: '#111827' }}>
                     {photos.length > 0 ? (
                       <span style={{ color: primaryColor }}>{photos.length} file(s) selected</span>
                     ) : (
-                      <>
-                        <span className="underline" style={{ color: primaryColor }}>Click to upload</span>
-                        <span className="chargemind-step-subtitle"> or drag files here</span>
-                      </>
+                      <span className="underline" style={{ color: primaryColor }}>Click to upload</span>
                     )}
                   </p>
-                  <p className="chargemind-helper-text mt-1">PNG, JPG, PDF or GIF (max. 10MB per file)</p>
                 </div>
               </label>
             </div>
           </>
-      )}
+        )}
 
         {evidenceError && (
           <div className="animate-in fade-in slide-in-from-top-2 bg-red-50 border border-red-100 rounded-xl px-4 py-[18px] mt-4">
             <div className="flex items-start gap-3">
               <div className="flex-1">
-                <p className="chargemind-error-title">
-                  Something went wrong
-                </p>
+                <p className="chargemind-error-title">Something went wrong</p>
                 <p className="chargemind-error-message">{evidenceError}</p>
               </div>
             </div>
-        </div>
-      )}
+          </div>
+        )}
 
         <div className="flex justify-center">
           <Button
             type="submit"
-            disabled={submitting}
-            className="chargemind-primary-button w-full shadow-sm hover:shadow-md transition-all disabled:opacity-50"
+            className="chargemind-primary-button w-full shadow-sm hover:shadow-md transition-all"
             style={{ backgroundColor: primaryColor, color: primaryTextColor }}
           >
-            {submitting ? (
-              <span className="flex items-center justify-center gap-2">
-                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                Sending...
-              </span>
-            ) : (
-              "Send request"
-            )}
+            Continue to Resolution Options
           </Button>
         </div>
+
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={() => setCurrentStep(3)}
+            className="chargemind-text-link"
+          >
+            ← Back
+          </button>
+        </div>
+      </form>
+    );
+  };
+
+  // STEP 5 - Resolution Preference (Moved from Step 4)
+  const renderStep5 = () => {
+    if (!route || !order) return null;
+
+    const currencySymbol = order?.totalAmount ? extractCurrencySymbol(order.totalAmount) : "$";
+    const orderValue = order?.totalAmount ? extractNumericValue(order.totalAmount) : 0;
+    const creditValue = orderValue * 1.1;
+    const creditDisplay = formatCurrencyValue(creditValue, currencySymbol);
+
+    return (
+      <div className="space-y-8" style={{ padding: '20px' }}>
+        <div className="text-center">
+          <h2 className="chargemind-step-title">How would you like us to resolve this?</h2>
+          <p className="chargemind-step-subtitle">
+            Choose your preferred resolution. All requests are subject to review.
+          </p>
+        </div>
+
+        {/* Opção PRIMÁRIA: Crédito - MÁXIMA HIERARQUIA VISUAL */}
+        <Card 
+          className="border-2 relative overflow-hidden shadow-lg rounded-lg"
+          style={{ 
+            borderColor: primaryColor,
+            background: `linear-gradient(135deg, ${hexToRgba(primaryColor, 0.08)} 0%, white 50%, ${hexToRgba(primaryColor, 0.08)} 100%)`,
+            boxShadow: `0 4px 12px ${hexToRgba(primaryColor, 0.15)}`,
+            borderRadius: '8px'
+          }}
+        >
+          <div 
+            className="absolute top-0 right-0 px-3 pt-2 pb-3 font-medium rounded-bl-lg z-0 chargemind-best-choice-badge"
+            style={{ backgroundColor: primaryColor, color: primaryTextColor }}
+          >
+            <span style={{ color: "#FFD700" }}>★</span> Best choice
+          </div>
+          <CardContent className="p-6 space-y-6 pt-12">
+            <div className="flex items-start gap-4">
+              <div 
+                className="p-3 rounded-xl chargemind-credit-store-icon-wrapper"
+                style={{ backgroundColor: hexToRgba(primaryColor, 0.15), marginTop: '20px' }}
+              >
+                <CreditCard className="h-6 w-6" style={{ color: primaryColor, marginTop: '3px' }} />
+              </div>
+              <div className="flex-1">
+                <h3 className="chargemind-step-title leading-tight">
+                  Request Store Credit
+                </h3>
+                <p className="chargemind-step-subtitle mt-3" style={{ fontWeight: '500' }}>
+                  Subject to 10% bonus upon approval ({creditDisplay})
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <span 
+                className="px-3 py-2 text-xs font-semibold rounded-full border chargemind-credit-badge"
+                style={{ 
+                  backgroundColor: hexToRgba(primaryColor, 0.1), 
+                  color: primaryColor,
+                  borderColor: hexToRgba(primaryColor, 0.2)
+                }}
+              >
+                ✓ Faster processing
+              </span>
+              <span 
+                className="px-3 py-2 text-xs font-semibold rounded-full border chargemind-credit-badge"
+                style={{ 
+                  backgroundColor: hexToRgba(primaryColor, 0.1), 
+                  color: primaryColor,
+                  borderColor: hexToRgba(primaryColor, 0.2)
+                }}
+              >
+                ✓ No expiration date
+              </span>
+              <span 
+                className="px-3 py-2 text-xs font-semibold rounded-full border chargemind-credit-badge"
+                style={{ 
+                  backgroundColor: hexToRgba(primaryColor, 0.1), 
+                  color: primaryColor,
+                  borderColor: hexToRgba(primaryColor, 0.2)
+                }}
+              >
+                ✓ 10% bonus if approved
+              </span>
+            </div>
+
+            <div className="flex justify-center">
+              <Button
+                onClick={() => selectDecision("credit")}
+                disabled={submitting}
+                className="chargemind-primary-button w-[85%] shadow-md hover:shadow-lg transition-all hover:scale-[1.02]"
+                style={{ backgroundColor: primaryColor, color: primaryTextColor }}
+              >
+                {submitting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    Submitting...
+                  </span>
+                ) : (
+                  `Request Store Credit (${creditDisplay})`
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      
+
+        {/* Opção SECUNDÁRIA: Refund - MÍNIMA HIERARQUIA VISUAL */}
+        <Card className="border border-[#DEDEDE] bg-[#F9F9F9] rounded-lg" style={{ borderRadius: '8px' }}>
+          <CardContent className="p-5 space-y-4">
+            <div className="flex items-start gap-4">
+              <div className="p-2 rounded-md bg-[#E9E9E9] chargemind-refund-mail-icon-wrapper" style={{ marginTop: '14px' }}>
+                <RotateCcw className="h-5 w-5 text-[#6B7280]" />
+              </div>
+              <div className="flex-1">
+                <h3 className="chargemind-field-label" style={{ fontWeight: '600', color: '#374151' }}>
+                  Request Refund
+                </h3>
+                <p className="chargemind-step-subtitle mt-3" style={{ marginTop: '-11px' }}>
+                  {order?.totalAmount || "$0.00"} to original payment method (subject to approval)
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <span className="px-3 py-1.5 text-xs font-normal rounded-full bg-[#F9F9F9] text-[#6B7280] chargemind-refund-badge">
+                <span className="flex items-center gap-1.5">
+                  <Clock className="h-4 w-4" />
+                  5-10 business days after approval
+                </span>
+              </span>
+              <span className="px-3 py-1.5 text-xs font-normal rounded-full bg-[#F9F9F9] text-[#6B7280] chargemind-refund-badge">
+                <span className="flex items-center gap-1.5">
+                  <Info className="h-4 w-4" />
+                  Subject to review
+                </span>
+              </span>
+            </div>
+
+            <div className="flex justify-center">
+              <Button
+                onClick={() => selectDecision("refund")}
+                disabled={submitting}
+                variant="outline"
+                className="chargemind-secondary-button w-[85%] font-medium border-[#DEDEDE] bg-white text-[#374151] hover:bg-[#F9F9F9]"
+              >
+                {submitting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    Submitting...
+                  </span>
+                ) : (
+                  "Request Refund"
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {evidenceError && (
+          <div className="animate-in fade-in slide-in-from-top-2 bg-red-50 border border-red-100 rounded-xl px-4 py-[18px] mt-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-1">
+                <p className="chargemind-error-title">Something went wrong</p>
+                <p className="chargemind-error-message">{evidenceError}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="flex justify-center">
           <button
@@ -3049,29 +3000,133 @@ const ResolutionHub = () => {
             ← Back
           </button>
         </div>
-    </form>
-  );
+      </div>
+    );
   };
 
   const renderStep6 = () => {
     if (!decision) return null;
 
-    if (decision === "credit") {
-      return (
-        <div className="space-y-6">
-          <div className="text-center">
-            <div 
-              className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 animate-in zoom-in duration-300"
-              style={{ 
-                backgroundColor: "#25B079",
-                boxShadow: "0 4px 12px rgba(16, 185, 129, 0.15)"
-              }}
-            >
-              <CheckCircle className="h-8 w-8 text-white" />
-            </div>
-            <h2 className="chargemind-step-title">All set! Your credit is ready</h2>
-            <p className="chargemind-step-subtitle">Use it now in the store</p>
+    // Both credit and refund now show "Request Submitted" - no instant code generation
+    const preferredResolutionText = decision === "credit" ? "Store Credit" : "Refund";
+    
+    return (
+      <div className="space-y-6">
+        <div className="text-center">
+          <div 
+            className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 animate-in zoom-in duration-300"
+            style={{ 
+              backgroundColor: "#25B079",
+              boxShadow: "0 4px 12px rgba(16, 185, 129, 0.15)"
+            }}
+          >
+            <CheckCircle className="h-8 w-8 text-white" />
           </div>
+          <h2 className="chargemind-step-title">Request Submitted!</h2>
+          <p className="chargemind-step-subtitle">Your request is under review. You will receive an email within 24 hours.</p>
+        </div>
+
+        <div className="order-tracking-card-wrapper md:px-3">
+          <div className="order-tracking-card">
+            {/* Header Section */}
+            <div className="order-tracking-header">
+              <div className="order-tracking-header-left">
+                <p className="order-tracking-label">{preferredResolutionText.toUpperCase()} REQUEST</p>
+                <p className="order-tracking-number">#{protocol}</p>
+                <p className="order-tracking-customer">Under review</p>
+              </div>
+            </div>
+
+            {/* Request Details Section */}
+            <div className="relative py-5">
+              <div className="order-tracking-divider-line"></div>
+            </div>
+            <div className="order-tracking-details">
+              <div className="order-tracking-detail-row">
+                <span className="order-tracking-detail-label">Preferred resolution:</span>
+                <span className="order-tracking-detail-value">{preferredResolutionText}</span>
+              </div>
+              <div className="order-tracking-detail-row" style={{ marginTop: '12px' }}>
+                <span className="order-tracking-detail-label">Email:</span>
+                <span className="order-tracking-detail-value">{order?.email || 'N/A'}</span>
+              </div>
+              <div className="order-tracking-detail-row" style={{ marginTop: '12px' }}>
+                <span className="order-tracking-detail-label">Review time:</span>
+                <span className="order-tracking-detail-value">Up to 24 hours</span>
+              </div>
+              {decision === "credit" && (
+                <div className="order-tracking-detail-row" style={{ marginTop: '12px' }}>
+                  <span className="order-tracking-detail-label">Potential bonus:</span>
+                  <span className="order-tracking-detail-value" style={{ color: primaryColor }}>+10% upon approval</span>
+                </div>
+              )}
+            </div>
+
+            {/* Protocol Number Section */}
+            <div className="relative py-5">
+              <div className="order-tracking-divider-line"></div>
+            </div>
+            <div className="order-tracking-address">
+              <p className="order-tracking-label">PROTOCOL NUMBER</p>
+              <div 
+                onClick={() => copyProtocolToClipboard(protocol)}
+                className="bg-white border-2 border-[#DEDEDE] rounded-lg p-5 mt-4 text-center cursor-pointer hover:bg-[#F9F9F9] transition-colors overflow-hidden"
+                style={{ borderColor: hexToRgba(primaryColor, 0.3) }}
+              >
+                <div className="flex items-center justify-center gap-3 flex-wrap">
+                  <code 
+                    className="text-lg font-mono font-extrabold tracking-wider break-words"
+                    style={{ color: primaryColor, maxWidth: '100%', wordBreak: 'break-all' }}
+                  >
+                    #{protocol}
+                  </code>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      copyProtocolToClipboard(protocol);
+                    }}
+                    className="p-2.5 transition-colors"
+                    style={{ backgroundColor: 'transparent', border: 'none', outline: 'none' }}
+                    title="Copy protocol"
+                  >
+                    <Copy className="h-5 w-5" style={{ color: primaryColor }} />
+                  </button>
+                </div>
+                <p className="chargemind-helper-text mt-2">Click anywhere to copy</p>
+              </div>
+            </div>
+
+            {/* Important Notice */}
+            <div className="relative py-5">
+              <div className="order-tracking-divider-line"></div>
+            </div>
+            <div className="order-tracking-address">
+              <p className="order-tracking-label">IMPORTANT</p>
+              <div className="border-2 rounded-lg p-5 mt-4" style={{ backgroundColor: hexToRgba('#DC2626', 0.1), borderColor: '#DC2626' }}>
+                <div className="flex gap-3" style={{ color: '#DC2626' }}>
+                  <AlertTriangle className="h-6 w-6 flex-shrink-0" />
+                  <p style={{ fontSize: '14px', lineHeight: '1.5', margin: 0 }}>
+                    Do not initiate a chargeback with your bank while we are reviewing your case. This may delay or cancel your request.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center">
+          <Button
+            onClick={() => window.location.href = "/"}
+            className="chargemind-primary-button w-[85%] shadow-sm hover:shadow-md transition-all"
+            style={{ backgroundColor: primaryColor, color: primaryTextColor }}
+          >
+            🏠 Return to Store
+          </Button>
+        </div>
+
+        {renderExperienceFeedback()}
+      </div>
+    );
 
           <div className="order-tracking-card-wrapper md:px-3">
             <div className="order-tracking-card">
