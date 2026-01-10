@@ -26,7 +26,9 @@ import {
   TrendingUp,
   Search,
   ThumbsDown,
+  Download,
 } from "lucide-react";
+import { generateProxyFlowDocumentation } from "@/utils/generateProxyFlowDocumentation";
 import { useState } from "react";
 import {
   Table,
@@ -194,13 +196,23 @@ export default function RefundRequest() {
     },
   ];
 
+  const handleDownloadDocumentation = () => {
+    generateProxyFlowDocumentation();
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <PageHeader 
-          title={t("refundRequestDashboard.title")} 
-          subtitle={t("refundRequestDashboard.subtitle")} 
-        />
+        <div className="flex items-center justify-between">
+          <PageHeader 
+            title={t("refundRequestDashboard.title")} 
+            subtitle={t("refundRequestDashboard.subtitle")} 
+          />
+          <Button onClick={handleDownloadDocumentation} variant="outline" className="gap-2">
+            <Download className="h-4 w-4" />
+            {t("refundRequestDashboard.downloadDocumentation")}
+          </Button>
+        </div>
 
         {/* Status Overview Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

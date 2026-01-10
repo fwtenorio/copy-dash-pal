@@ -457,6 +457,7 @@ export default {
   refundRequestDashboard: {
     title: "Dashboard de Reembolsos",
     subtitle: "Visão completa das solicitações de reembolso com métricas do fluxo de resolução e categorização de problemas.",
+    downloadDocumentation: "Baixar Documentação do Fluxo",
     pending: "Pendentes",
     inReview: "Em Análise",
     creditIssued: "Crédito Emitido",
