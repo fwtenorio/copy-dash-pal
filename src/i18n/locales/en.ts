@@ -462,6 +462,7 @@ export default {
   refundRequestDashboard: {
     title: "Refund Request Dashboard",
     subtitle: "Complete overview of customer refund requests with resolution flow metrics and problem categorization.",
+    downloadDocumentation: "Download Flow Documentation",
     pending: "Pending",
     inReview: "In Review",
     creditIssued: "Credit Issued",
