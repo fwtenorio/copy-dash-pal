@@ -76,6 +76,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useForm, Controller } from "react-hook-form";
 import { SaveBar } from "@/components/SaveBar";
+import { EvidenceFieldEditor } from "@/components/EvidenceFieldEditor";
+import { FileText } from "lucide-react";
 
 interface TeamMember {
   id: string;
@@ -1313,6 +1315,12 @@ export default function Settings() {
                 {t("settings.brandingTab", { defaultValue: "Branding" })}
               </TabsTrigger>
               <TabsTrigger
+                value="evidence"
+                className="border-b-[3px] border-transparent data-[state=active]:border-[#38CC92] rounded-none bg-transparent pb-3"
+              >
+                Evidence Requirements
+              </TabsTrigger>
+              <TabsTrigger
                 value="team"
                 className="border-b-[3px] border-transparent data-[state=active]:border-[#38CC92] rounded-none bg-transparent pb-3"
               >
@@ -1712,6 +1720,10 @@ export default function Settings() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="evidence" className="space-y-6 pb-24">
+            <EvidenceFieldEditor />
           </TabsContent>
 
           <TabsContent value="team" className="space-y-6 pb-24">

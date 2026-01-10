@@ -241,6 +241,62 @@ export type Database = {
           },
         ]
       }
+      evidence_field_configs: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          display_order: number | null
+          field_key: string
+          field_label: string
+          field_type: string
+          id: string
+          is_predefined: boolean | null
+          is_required: boolean | null
+          is_visible: boolean | null
+          options: Json | null
+          problem_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          display_order?: number | null
+          field_key: string
+          field_label: string
+          field_type: string
+          id?: string
+          is_predefined?: boolean | null
+          is_required?: boolean | null
+          is_visible?: boolean | null
+          options?: Json | null
+          problem_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          display_order?: number | null
+          field_key?: string
+          field_label?: string
+          field_type?: string
+          id?: string
+          is_predefined?: boolean | null
+          is_required?: boolean | null
+          is_visible?: boolean | null
+          options?: Json | null
+          problem_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evidence_field_configs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_settings: {
         Row: {
           client_id: string
