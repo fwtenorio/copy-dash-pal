@@ -295,29 +295,6 @@ function AddFieldModal({ open, onClose, onSave, problemType }: AddFieldModalProp
   );
 }
 
-// Helper to generate local fallback fields when DB fails
-function generateLocalFallbackFields(cId: string): EvidenceFieldConfig[] {
-  const fallbackFields: EvidenceFieldConfig[] = [];
-  for (const [, predefinedFields] of Object.entries(PREDEFINED_FIELDS)) {
-    for (const field of predefinedFields) {
-      fallbackFields.push({
-        id: `local_${field.problem_type}_${field.field_key}`,
-        client_id: cId,
-        problem_type: field.problem_type,
-        field_key: field.field_key,
-        field_label: field.field_label,
-        field_type: field.field_type,
-        is_predefined: field.is_predefined,
-        is_visible: field.is_visible,
-        is_required: field.is_required,
-        options: field.options,
-        display_order: field.display_order,
-      });
-    }
-  }
-  return fallbackFields;
-}
-
 export function EvidenceFieldEditor() {
   const { t } = useTranslation();
   const [fields, setFields] = useState<EvidenceFieldConfig[]>([]);
@@ -326,12 +303,10 @@ export function EvidenceFieldEditor() {
   const [clientId, setClientId] = useState<string | null>(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [addModalCategory, setAddModalCategory] = useState<string>("");
-  const [usingLocalFallback, setUsingLocalFallback] = useState(false);
 
   const fetchFields = useCallback(async () => {
     try {
       setLoading(true);
-      setUsingLocalFallback(false);
       console.log("[EvidenceFieldEditor] Starting fetchFields...");
       
       const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -396,21 +371,12 @@ export function EvidenceFieldEditor() {
       }
     } catch (error: any) {
       console.error("[EvidenceFieldEditor] Error fetching evidence fields:", error);
-      console.error("[EvidenceFieldEditor] Error details:", JSON.stringify(error, null, 2));
-      
       const errorMessage = error?.message || error?.details || "Unknown error";
       toast.error(`Failed to load evidence fields: ${errorMessage}`);
-      
-      // Fallback: show local predefined fields so UI isn't empty
-      if (clientId) {
-        console.log("[EvidenceFieldEditor] Using local fallback fields");
-        setFields(generateLocalFallbackFields(clientId));
-        setUsingLocalFallback(true);
-      }
     } finally {
       setLoading(false);
     }
-  }, [clientId]);
+  }, []);
 
   const seedPredefinedFields = async (cId: string) => {
     try {
@@ -451,11 +417,6 @@ export function EvidenceFieldEditor() {
       console.error("[EvidenceFieldEditor] Error seeding predefined fields:", error);
       const errorMessage = error?.message || error?.details || "Unknown error";
       toast.error(`Failed to save defaults: ${errorMessage}`);
-      
-      // Use local fallback so UI isn't empty
-      console.log("[EvidenceFieldEditor] Seed failed, using local fallback");
-      setFields(generateLocalFallbackFields(cId));
-      setUsingLocalFallback(true);
     }
   };
 
@@ -563,30 +524,6 @@ export function EvidenceFieldEditor() {
 
   return (
     <div className="space-y-6">
-      {usingLocalFallback && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-          <div className="flex items-start gap-3">
-            <div className="p-1.5 rounded-full bg-amber-100">
-              <AlertTriangle className="h-4 w-4 text-amber-600" />
-            </div>
-            <div>
-              <h4 className="font-medium text-amber-900">Showing Local Defaults</h4>
-              <p className="text-sm text-amber-700 mt-1">
-                Could not load or save configuration to the database. Showing default fields locally. 
-                Changes will not persist until the connection is restored.
-              </p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="mt-2"
-                onClick={() => fetchFields()}
-              >
-                <RotateCcw className="h-3 w-3 mr-1" /> Retry Connection
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
       
       <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
         <div className="flex items-start gap-3">
