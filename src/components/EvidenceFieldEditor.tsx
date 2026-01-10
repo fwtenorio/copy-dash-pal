@@ -295,6 +295,29 @@ function AddFieldModal({ open, onClose, onSave, problemType }: AddFieldModalProp
   );
 }
 
+// Helper to generate local fallback fields when DB fails
+function generateLocalFallbackFields(cId: string): EvidenceFieldConfig[] {
+  const fallbackFields: EvidenceFieldConfig[] = [];
+  for (const [, predefinedFields] of Object.entries(PREDEFINED_FIELDS)) {
+    for (const field of predefinedFields) {
+      fallbackFields.push({
+        id: `local_${field.problem_type}_${field.field_key}`,
+        client_id: cId,
+        problem_type: field.problem_type,
+        field_key: field.field_key,
+        field_label: field.field_label,
+        field_type: field.field_type,
+        is_predefined: field.is_predefined,
+        is_visible: field.is_visible,
+        is_required: field.is_required,
+        options: field.options,
+        display_order: field.display_order,
+      });
+    }
+  }
+  return fallbackFields;
+}
+
 export function EvidenceFieldEditor() {
   const { t } = useTranslation();
   const [fields, setFields] = useState<EvidenceFieldConfig[]>([]);
@@ -303,59 +326,88 @@ export function EvidenceFieldEditor() {
   const [clientId, setClientId] = useState<string | null>(null);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [addModalCategory, setAddModalCategory] = useState<string>("");
+  const [usingLocalFallback, setUsingLocalFallback] = useState(false);
 
   const fetchFields = useCallback(async () => {
     try {
       setLoading(true);
+      setUsingLocalFallback(false);
       console.log("[EvidenceFieldEditor] Starting fetchFields...");
       
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       console.log("[EvidenceFieldEditor] Auth user:", user?.id, "Error:", authError);
       
+      if (authError) {
+        console.error("[EvidenceFieldEditor] Auth error details:", JSON.stringify(authError, null, 2));
+        toast.error(`Auth error: ${authError.message}`);
+        return;
+      }
+      
       if (!user) {
         console.log("[EvidenceFieldEditor] No user found, returning early");
+        toast.error("No authenticated user found. Please log in.");
         return;
       }
 
-      const { data: userRow, error: userError } = await supabase
-        .from("users")
-        .select("client_id")
-        .eq("id", user.id)
-        .maybeSingle();
+      // Use RPC function instead of querying users table directly
+      const { data: rpcClientId, error: rpcError } = await supabase.rpc("get_user_client_id", { 
+        _user_id: user.id 
+      });
 
-      console.log("[EvidenceFieldEditor] User row:", userRow, "Error:", userError);
+      console.log("[EvidenceFieldEditor] RPC get_user_client_id result:", rpcClientId, "Error:", rpcError);
 
-      if (!userRow?.client_id) {
-        console.log("[EvidenceFieldEditor] No client_id found, returning early");
+      if (rpcError) {
+        console.error("[EvidenceFieldEditor] RPC error details:", JSON.stringify(rpcError, null, 2));
+        toast.error(`Failed to get client ID: ${rpcError.message}`);
         return;
       }
-      setClientId(userRow.client_id);
+
+      if (!rpcClientId) {
+        console.log("[EvidenceFieldEditor] No client_id found via RPC");
+        toast.error("User is not linked to any company");
+        return;
+      }
+      
+      setClientId(rpcClientId);
 
       const { data, error } = await supabase
         .from("evidence_field_configs")
         .select("*")
-        .eq("client_id", userRow.client_id)
+        .eq("client_id", rpcClientId)
         .order("display_order", { ascending: true });
 
       console.log("[EvidenceFieldEditor] Evidence fields fetched:", data?.length, "Error:", error);
 
-      if (error) throw error;
+      if (error) {
+        console.error("[EvidenceFieldEditor] Fetch error details:", JSON.stringify(error, null, 2));
+        throw error;
+      }
 
-      // Se não houver dados, seed com os campos predefinidos
+      // If no data, seed with predefined fields
       if (!data || data.length === 0) {
         console.log("[EvidenceFieldEditor] No fields found, seeding predefined fields...");
-        await seedPredefinedFields(userRow.client_id);
+        await seedPredefinedFields(rpcClientId);
       } else {
         console.log("[EvidenceFieldEditor] Setting fields:", data.length);
         setFields(data.map(toFieldConfig));
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("[EvidenceFieldEditor] Error fetching evidence fields:", error);
-      toast.error("Failed to load evidence field configurations");
+      console.error("[EvidenceFieldEditor] Error details:", JSON.stringify(error, null, 2));
+      
+      const errorMessage = error?.message || error?.details || "Unknown error";
+      toast.error(`Failed to load evidence fields: ${errorMessage}`);
+      
+      // Fallback: show local predefined fields so UI isn't empty
+      if (clientId) {
+        console.log("[EvidenceFieldEditor] Using local fallback fields");
+        setFields(generateLocalFallbackFields(clientId));
+        setUsingLocalFallback(true);
+      }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [clientId]);
 
   const seedPredefinedFields = async (cId: string) => {
     try {
@@ -378,17 +430,29 @@ export function EvidenceFieldEditor() {
         }
       }
 
+      console.log("[EvidenceFieldEditor] Seeding", allFieldsToInsert.length, "predefined fields...");
+
       const { data, error } = await supabase
         .from("evidence_field_configs")
         .insert(allFieldsToInsert)
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("[EvidenceFieldEditor] Seed error details:", JSON.stringify(error, null, 2));
+        throw error;
+      }
+      
       setFields((data || []).map(toFieldConfig));
       toast.success("Evidence fields initialized with defaults");
-    } catch (error) {
-      console.error("Error seeding predefined fields:", error);
-      toast.error("Failed to initialize default fields");
+    } catch (error: any) {
+      console.error("[EvidenceFieldEditor] Error seeding predefined fields:", error);
+      const errorMessage = error?.message || error?.details || "Unknown error";
+      toast.error(`Failed to save defaults: ${errorMessage}`);
+      
+      // Use local fallback so UI isn't empty
+      console.log("[EvidenceFieldEditor] Seed failed, using local fallback");
+      setFields(generateLocalFallbackFields(cId));
+      setUsingLocalFallback(true);
     }
   };
 
@@ -496,6 +560,31 @@ export function EvidenceFieldEditor() {
 
   return (
     <div className="space-y-6">
+      {usingLocalFallback && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <div className="flex items-start gap-3">
+            <div className="p-1.5 rounded-full bg-amber-100">
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+            </div>
+            <div>
+              <h4 className="font-medium text-amber-900">Showing Local Defaults</h4>
+              <p className="text-sm text-amber-700 mt-1">
+                Could not load or save configuration to the database. Showing default fields locally. 
+                Changes will not persist until the connection is restored.
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2"
+                onClick={() => fetchFields()}
+              >
+                <RotateCcw className="h-3 w-3 mr-1" /> Retry Connection
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
         <div className="flex items-start gap-3">
           <div className="p-1.5 rounded-full bg-blue-100">
