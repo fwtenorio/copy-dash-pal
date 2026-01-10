@@ -349,31 +349,34 @@ export function EvidenceFieldEditor() {
         return;
       }
 
-      // Use RPC function instead of querying users table directly
-      const { data: rpcClientId, error: rpcError } = await supabase.rpc("get_user_client_id", { 
-        _user_id: user.id 
-      });
+      // Fetch client_id from users table
+      const { data: userRow, error: userError } = await supabase
+        .from("users")
+        .select("client_id")
+        .eq("id", user.id)
+        .maybeSingle();
 
-      console.log("[EvidenceFieldEditor] RPC get_user_client_id result:", rpcClientId, "Error:", rpcError);
+      console.log("[EvidenceFieldEditor] User row:", userRow, "Error:", userError);
 
-      if (rpcError) {
-        console.error("[EvidenceFieldEditor] RPC error details:", JSON.stringify(rpcError, null, 2));
-        toast.error(`Failed to get client ID: ${rpcError.message}`);
+      if (userError) {
+        console.error("[EvidenceFieldEditor] User query error:", JSON.stringify(userError, null, 2));
+        toast.error(`Failed to get user data: ${userError.message}`);
         return;
       }
 
-      if (!rpcClientId) {
-        console.log("[EvidenceFieldEditor] No client_id found via RPC");
+      if (!userRow?.client_id) {
+        console.log("[EvidenceFieldEditor] No client_id found");
         toast.error("User is not linked to any company");
         return;
       }
       
-      setClientId(rpcClientId);
+      setClientId(userRow.client_id);
+      const currentClientId = userRow.client_id;
 
       const { data, error } = await supabase
         .from("evidence_field_configs")
         .select("*")
-        .eq("client_id", rpcClientId)
+        .eq("client_id", currentClientId)
         .order("display_order", { ascending: true });
 
       console.log("[EvidenceFieldEditor] Evidence fields fetched:", data?.length, "Error:", error);
@@ -386,7 +389,7 @@ export function EvidenceFieldEditor() {
       // If no data, seed with predefined fields
       if (!data || data.length === 0) {
         console.log("[EvidenceFieldEditor] No fields found, seeding predefined fields...");
-        await seedPredefinedFields(rpcClientId);
+        await seedPredefinedFields(currentClientId);
       } else {
         console.log("[EvidenceFieldEditor] Setting fields:", data.length);
         setFields(data.map(toFieldConfig));
