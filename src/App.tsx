@@ -20,6 +20,7 @@ import Avoid from "./pages/Avoid";
 import Charges from "./pages/Charges";
 import RefundRequest from "./pages/RefundRequest";
 import Admin from "./pages/Admin";
+import AdminResolutions from "./pages/AdminResolutions";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
@@ -316,6 +317,7 @@ const App = () => {
               <Route path="/notificacoes" element={<Notifications />} />
               <Route path="/configuracoes" element={<Settings />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/admin/resolutions" element={<AdminResolutions />} />
               <Route path="/test/item-not-received" element={<ItemNotReceivedTest />} />
             </Route>
             {/* Proxy route - public, no auth required */}
