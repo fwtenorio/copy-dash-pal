@@ -268,10 +268,46 @@ export default function RefundRequest() {
   const [selectedRequest, setSelectedRequest] = useState<RequestData | null>(null);
   const [isDetailSheetOpen, setIsDetailSheetOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [bonusPercentage, setBonusPercentage] = useState<number>(10);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleRequestClick = (request: RequestData) => {
     setSelectedRequest(request);
+    setBonusPercentage(10); // Reset bonus percentage
     setIsDetailSheetOpen(true);
+  };
+
+  // Mock action handlers - in production these would update the database
+  const handleApproveCredit = () => {
+    if (!selectedRequest) return;
+    setIsProcessing(true);
+    // Simulate API call
+    setTimeout(() => {
+      console.log("Approved credit for:", selectedRequest.id, "with bonus:", bonusPercentage);
+      setIsProcessing(false);
+      setIsDetailSheetOpen(false);
+      // In production: update dispute_requests table via Supabase
+    }, 500);
+  };
+
+  const handleIssueRefund = () => {
+    if (!selectedRequest) return;
+    setIsProcessing(true);
+    setTimeout(() => {
+      console.log("Issued refund for:", selectedRequest.id);
+      setIsProcessing(false);
+      setIsDetailSheetOpen(false);
+    }, 500);
+  };
+
+  const handleReject = () => {
+    if (!selectedRequest) return;
+    setIsProcessing(true);
+    setTimeout(() => {
+      console.log("Rejected:", selectedRequest.id);
+      setIsProcessing(false);
+      setIsDetailSheetOpen(false);
+    }, 500);
   };
 
   const filteredRequests = mockRequestsData.recentRequests.filter(
@@ -746,14 +782,77 @@ export default function RefundRequest() {
                 </ScrollArea>
 
                 {/* Footer Actions */}
-                <div className="border-t bg-muted/30 px-6 py-4">
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => setIsDetailSheetOpen(false)}
-                  >
-                    {t("common.close", { defaultValue: "Close" })}
-                  </Button>
+                <div className="border-t bg-muted/30 px-6 py-5 space-y-4">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                    {t("refundRequestDashboard.decision", { defaultValue: "Decision" })}
+                  </h3>
+
+                  {selectedRequest.status === "pending" || selectedRequest.status === "inReview" ? (
+                    <div className="space-y-4">
+                      {/* Approve Credit Section */}
+                      <div className="flex items-end gap-3">
+                        <div className="flex-1">
+                          <Label htmlFor="bonus" className="text-sm mb-1.5 block">
+                            {t("refundRequestDashboard.bonusPercentage", { defaultValue: "Bonus Percentage" })}
+                          </Label>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              id="bonus"
+                              type="number"
+                              min={0}
+                              max={100}
+                              value={bonusPercentage}
+                              onChange={(e) => setBonusPercentage(Number(e.target.value))}
+                              className="w-20 text-center"
+                            />
+                            <span className="text-sm text-muted-foreground">%</span>
+                          </div>
+                        </div>
+                        <Button 
+                          onClick={handleApproveCredit}
+                          disabled={isProcessing}
+                          className="flex-1"
+                        >
+                          <CheckCircle2 className="h-4 w-4 mr-2" />
+                          {t("refundRequestDashboard.approveCredit", { defaultValue: "Approve Credit" })}
+                        </Button>
+                      </div>
+
+                      {/* Other Actions */}
+                      <div className="flex gap-3">
+                        <Button 
+                          variant="outline" 
+                          onClick={handleIssueRefund}
+                          disabled={isProcessing}
+                          className="flex-1"
+                        >
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          {t("refundRequestDashboard.issueRefund", { defaultValue: "Issue Refund" })}
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          onClick={handleReject}
+                          disabled={isProcessing}
+                          className="flex-1"
+                        >
+                          <XCircle className="h-4 w-4 mr-2" />
+                          {t("refundRequestDashboard.reject", { defaultValue: "Reject" })}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border bg-muted/20 p-4 text-center">
+                      <Badge className={`${statusColors[selectedRequest.status]} text-sm px-3 py-1`}>
+                        {t(`refundRequestDashboard.statuses.${selectedRequest.status}`)}
+                      </Badge>
+                      {selectedRequest.decision && (
+                        <p className="text-sm text-muted-foreground mt-2">
+                          {t("refundRequestDashboard.resolutionApplied", { defaultValue: "Resolution applied" })}: 
+                          <span className="font-medium capitalize ml-1">{selectedRequest.decision}</span>
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </>
             )}
