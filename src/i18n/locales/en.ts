@@ -460,8 +460,8 @@ export default {
     comingSoon: "Coming soon: automatic creation and messaging straight from alerts.",
   },
   refundRequestDashboard: {
-    title: "Refund Request Dashboard",
-    subtitle: "Complete overview of customer refund requests with resolution flow metrics and problem categorization.",
+    title: "Refund Request",
+    subtitle: "Overview of customer refund requests, resolution metrics, and issue categories.",
     pending: "Pending",
     inReview: "In Review",
     creditIssued: "Credit Issued",
