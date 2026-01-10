@@ -170,6 +170,77 @@ export type Database = {
         }
         Relationships: []
       }
+      dispute_requests: {
+        Row: {
+          admin_bonus_percentage: number | null
+          admin_notes: string | null
+          client_id: string | null
+          created_at: string
+          currency: string | null
+          customer_email: string
+          customer_name: string | null
+          evidence_data: Json
+          id: string
+          order_id: string
+          order_total: number | null
+          preferred_resolution: string
+          problem_type: string
+          protocol_number: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_bonus_percentage?: number | null
+          admin_notes?: string | null
+          client_id?: string | null
+          created_at?: string
+          currency?: string | null
+          customer_email: string
+          customer_name?: string | null
+          evidence_data?: Json
+          id?: string
+          order_id: string
+          order_total?: number | null
+          preferred_resolution: string
+          problem_type: string
+          protocol_number: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_bonus_percentage?: number | null
+          admin_notes?: string | null
+          client_id?: string | null
+          created_at?: string
+          currency?: string | null
+          customer_email?: string
+          customer_name?: string | null
+          evidence_data?: Json
+          id?: string
+          order_id?: string
+          order_total?: number | null
+          preferred_resolution?: string
+          problem_type?: string
+          protocol_number?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispute_requests_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_settings: {
         Row: {
           client_id: string
