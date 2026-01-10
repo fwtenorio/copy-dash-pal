@@ -455,8 +455,8 @@ export default {
     comingSoon: "Em breve: abertura e comunicação automática direto dos alertas.",
   },
   refundRequestDashboard: {
-    title: "Dashboard de Reembolsos",
-    subtitle: "Visão completa das solicitações de reembolso com métricas do fluxo de resolução e categorização de problemas.",
+    title: "Refund Request",
+    subtitle: "Visão geral das solicitações de reembolso, métricas de resolução e categorias de problemas.",
     pending: "Pendentes",
     inReview: "Em Análise",
     creditIssued: "Crédito Emitido",
