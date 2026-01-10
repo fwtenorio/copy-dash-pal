@@ -26,7 +26,16 @@ import {
   TrendingUp,
   Search,
   ThumbsDown,
+  X,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useState } from "react";
 import {
   Table,
@@ -155,9 +164,20 @@ const decisionColors: Record<string, string> = {
   refund: "bg-blue-50 text-blue-700",
 };
 
+// Status configuration for modals
+const statusConfig: Record<string, { icon: React.ElementType; bgColor: string; iconColor: string; label: string }> = {
+  pending: { icon: Clock3, bgColor: "bg-amber-50", iconColor: "text-amber-600", label: "pending" },
+  inReview: { icon: Search, bgColor: "bg-blue-50", iconColor: "text-blue-600", label: "inReview" },
+  creditIssued: { icon: Store, bgColor: "bg-emerald-50", iconColor: "text-emerald-600", label: "creditIssued" },
+  refundProcessed: { icon: CreditCard, bgColor: "bg-gray-100", iconColor: "text-gray-600", label: "refundProcessed" },
+};
+
 export default function RefundRequest() {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [modalSearchTerm, setModalSearchTerm] = useState("");
 
   const filteredRequests = mockRequestsData.recentRequests.filter(
     (req) =>
@@ -166,6 +186,40 @@ export default function RefundRequest() {
       req.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       req.protocol.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Filter requests by status for modal
+  const getRequestsByStatus = (status: string) => {
+    // Map status to actual data status values
+    const statusMap: Record<string, string[]> = {
+      pending: ["pending"],
+      inReview: ["inReview"],
+      creditIssued: ["completed"], // completed with credit decision
+      refundProcessed: ["completed"], // completed with refund decision
+    };
+    
+    return mockRequestsData.recentRequests.filter((req) => {
+      const matchesStatus = statusMap[status]?.includes(req.status);
+      // For creditIssued and refundProcessed, also check decision type
+      if (status === "creditIssued") {
+        return req.status === "completed" && req.decision === "credit";
+      }
+      if (status === "refundProcessed") {
+        return req.status === "completed" && req.decision === "refund";
+      }
+      return matchesStatus;
+    }).filter((req) =>
+      req.orderNumber.toLowerCase().includes(modalSearchTerm.toLowerCase()) ||
+      req.customer.toLowerCase().includes(modalSearchTerm.toLowerCase()) ||
+      req.email.toLowerCase().includes(modalSearchTerm.toLowerCase()) ||
+      req.protocol.toLowerCase().includes(modalSearchTerm.toLowerCase())
+    );
+  };
+
+  const handleStatusCardClick = (status: string) => {
+    setSelectedStatus(status);
+    setModalSearchTerm("");
+    setStatusModalOpen(true);
+  };
 
   const problemCategories = [
     { 
@@ -204,7 +258,10 @@ export default function RefundRequest() {
 
         {/* Status Overview Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="border-border">
+          <Card 
+            className="border-border cursor-pointer hover:border-primary/50 hover:shadow-md transition-all"
+            onClick={() => handleStatusCardClick("pending")}
+          >
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-amber-50">
@@ -218,7 +275,10 @@ export default function RefundRequest() {
             </CardContent>
           </Card>
 
-          <Card className="border-border">
+          <Card 
+            className="border-border cursor-pointer hover:border-primary/50 hover:shadow-md transition-all"
+            onClick={() => handleStatusCardClick("inReview")}
+          >
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-blue-50">
@@ -232,7 +292,10 @@ export default function RefundRequest() {
             </CardContent>
           </Card>
 
-          <Card className="border-border">
+          <Card 
+            className="border-border cursor-pointer hover:border-primary/50 hover:shadow-md transition-all"
+            onClick={() => handleStatusCardClick("creditIssued")}
+          >
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-emerald-50">
@@ -246,7 +309,10 @@ export default function RefundRequest() {
             </CardContent>
           </Card>
 
-          <Card className="border-border">
+          <Card 
+            className="border-border cursor-pointer hover:border-primary/50 hover:shadow-md transition-all"
+            onClick={() => handleStatusCardClick("refundProcessed")}
+          >
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-gray-100">
@@ -260,6 +326,118 @@ export default function RefundRequest() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Status Modal */}
+        <Dialog open={statusModalOpen} onOpenChange={setStatusModalOpen}>
+          <DialogContent className="max-w-4xl max-h-[85vh]">
+            <DialogHeader>
+              {selectedStatus && (
+                <>
+                  <DialogTitle className="flex items-center gap-2">
+                    {(() => {
+                      const config = statusConfig[selectedStatus];
+                      const StatusIcon = config?.icon || Clock3;
+                      return (
+                        <>
+                          <div className={`p-2 rounded-lg ${config?.bgColor}`}>
+                            <StatusIcon className={`h-5 w-5 ${config?.iconColor}`} />
+                          </div>
+                          {t(`refundRequestDashboard.${selectedStatus}`)} Requests
+                        </>
+                      );
+                    })()}
+                  </DialogTitle>
+                  <DialogDescription>
+                    {t("refundRequestDashboard.modalDescription", { 
+                      status: t(`refundRequestDashboard.${selectedStatus}`),
+                      defaultValue: `Showing all requests with status: ${selectedStatus}` 
+                    })}
+                  </DialogDescription>
+                </>
+              )}
+            </DialogHeader>
+
+            {/* Search in modal */}
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={t("refundRequestDashboard.searchPlaceholder")}
+                value={modalSearchTerm}
+                onChange={(e) => setModalSearchTerm(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
+            <ScrollArea className="h-[55vh]">
+              {selectedStatus && getRequestsByStatus(selectedStatus).length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t("refundRequestDashboard.table.order")}</TableHead>
+                      <TableHead>{t("refundRequestDashboard.table.customer")}</TableHead>
+                      <TableHead>{t("refundRequestDashboard.table.problemType")}</TableHead>
+                      <TableHead>{t("refundRequestDashboard.table.decision")}</TableHead>
+                      <TableHead>{t("refundRequestDashboard.table.value")}</TableHead>
+                      <TableHead>{t("refundRequestDashboard.table.date")}</TableHead>
+                      <TableHead className="text-right">{t("refundRequestDashboard.table.actions")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {getRequestsByStatus(selectedStatus).map((request) => {
+                      const ProblemIcon = problemTypeIcons[request.problemType];
+                      return (
+                        <TableRow key={request.id}>
+                          <TableCell className="font-medium">{request.orderNumber}</TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium text-foreground">{request.customer}</p>
+                              <p className="text-xs text-muted-foreground">{request.email}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div className={`p-1 rounded ${problemTypeColors[request.problemType]}`}>
+                                <ProblemIcon className="h-3 w-3" />
+                              </div>
+                              <span className="text-sm">{t(`refundRequestDashboard.problemTypes.${request.problemType}`)}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {request.decision ? (
+                              <Badge className={decisionColors[request.decision]}>
+                                {request.decision === "credit" ? (
+                                  <Store className="h-3 w-3 mr-1" />
+                                ) : (
+                                  <CreditCard className="h-3 w-3 mr-1" />
+                                )}
+                                {t(`refundRequestDashboard.decisions.${request.decision}`)}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="font-medium">${request.value.toFixed(2)}</TableCell>
+                          <TableCell className="text-muted-foreground">{request.date}</TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="ghost" size="sm">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <FileText className="h-12 w-12 mb-4 opacity-50" />
+                  <p className="text-lg font-medium">{t("refundRequestDashboard.noRequestsInStatus", { defaultValue: "No requests found" })}</p>
+                  <p className="text-sm">{t("refundRequestDashboard.noRequestsInStatusDesc", { defaultValue: "There are no requests with this status at the moment." })}</p>
+                </div>
+              )}
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
 
         {/* Problem Categories + Resolution Outcomes */}
         <div className="grid gap-6 lg:grid-cols-2">
