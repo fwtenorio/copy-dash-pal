@@ -426,6 +426,7 @@ async function fetchBranding(shop: string) {
   };
   
   const brandingResult = {
+    client_id: clientId, // CRÍTICO: necessário para buscar evidence_field_configs
     brand_color: cleanValue(brandingData.brand_color), // CRÍTICO: brand_color da tabela clients
     brand_text_color: cleanValue(brandingData.brand_text_color), // CRÍTICO: brand_text_color da tabela clients
     logo_url: cleanValue(brandingData.logo_url), // CRÍTICO: logo_url da tabela clients
@@ -436,6 +437,7 @@ async function fetchBranding(shop: string) {
   
   console.log("📤 Retornando branding (objeto final):", JSON.stringify(brandingResult, null, 2));
   console.log("📤 Tipo de cada campo:", {
+    client_id: typeof brandingResult.client_id,
     brand_color: typeof brandingResult.brand_color,
     brand_text_color: typeof brandingResult.brand_text_color,
     logo_url: typeof brandingResult.logo_url,
