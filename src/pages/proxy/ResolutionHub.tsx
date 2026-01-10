@@ -1288,10 +1288,23 @@ const ResolutionHub = () => {
           console.log("🔍 Modo de busca (via localStorage/admin):", useMockData ? "MOCK DATA ✅" : "REAL DATA 🌐");
           console.log("   →", useMockData ? "Test Mode (Mock Data) ativo!" : "Production Mode (Real Data) ativo!");
         } else {
-          // 4. Default: real data (produção)
-          useMockData = false;
-          console.log("🔍 Modo de busca (default): REAL DATA 🌐");
-          console.log("   → Production Mode (Real Data) ativo!");
+          // 4. Verifica se estamos em ambiente de desenvolvimento
+          const hostname = window.location.hostname;
+          const isDev = hostname === 'localhost' || 
+                        hostname.includes('lovableproject.com') ||
+                        hostname.includes('127.0.0.1');
+          
+          if (isDev) {
+            // Em desenvolvimento: default = mock para facilitar testes
+            useMockData = true;
+            console.log("🔍 Modo de busca (default dev): MOCK DATA ✅");
+            console.log("   → Ambiente de desenvolvimento detectado - usando Mock Data automaticamente");
+          } else {
+            // Produção (Shopify): default = real data
+            useMockData = false;
+            console.log("🔍 Modo de busca (default): REAL DATA 🌐");
+            console.log("   → Production Mode (Real Data) ativo!");
+          }
         }
       }
     
