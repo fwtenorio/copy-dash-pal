@@ -4,7 +4,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PhoneInput } from "@/components/ui/phone-input";
@@ -31,10 +30,8 @@ import {
   Building2,
   Mail,
   User,
-  Phone,
   DollarSign,
   Plus,
-  ExternalLink,
   Users,
   Settings as SettingsIcon,
   AlertCircle,
@@ -51,14 +48,10 @@ import {
   EyeOff,
   Monitor,
   Smartphone,
-  MapPin,
   MonitorSmartphone,
-  Image as ImageIcon,
-  UploadCloud,
-  Palette,
-  Send,
+  MapPin,
 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/safeClient";
 import { toast } from "sonner";
@@ -76,8 +69,6 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useForm, Controller } from "react-hook-form";
 import { SaveBar } from "@/components/SaveBar";
-import { EvidenceFieldEditor } from "@/components/EvidenceFieldEditor";
-import { FileText } from "lucide-react";
 
 interface TeamMember {
   id: string;
@@ -128,32 +119,7 @@ export default function Settings() {
   const [isLoadingTeam, setIsLoadingTeam] = useState(true);
   const [currentUserLevel, setCurrentUserLevel] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [hasShownMigrationWarning, setHasShownMigrationWarning] = useState(false);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
-  const [selectedLogoFile, setSelectedLogoFile] = useState<File | null>(null);
-  const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(null);
-  const [currentLogoUrl, setCurrentLogoUrl] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const initialBrandColorRef = useRef("#000000");
-  const [brandColor, setBrandColor] = useState(initialBrandColorRef.current);
-  const initialBrandTextColorRef = useRef("#FFFFFF");
-  const [brandTextColor, setBrandTextColor] = useState(initialBrandTextColorRef.current);
-  const brandingColumnsAvailable = useRef(true);
-  const brandingWarningShown = useRef(false);
-  const initialSenderSettingsRef = useRef({
-    fromName: "",
-    replyToEmail: "",
-    emailFooter: "",
-  });
-  const [fromName, setFromName] = useState(initialSenderSettingsRef.current.fromName);
-  const [replyToEmail, setReplyToEmail] = useState(initialSenderSettingsRef.current.replyToEmail);
-  const [emailFooter, setEmailFooter] = useState(initialSenderSettingsRef.current.emailFooter);
-  const initialPolicySupportRef = useRef({
-    refundPolicyUrl: "",
-    supportUrl: "",
-  });
-  const [refundPolicyUrl, setRefundPolicyUrl] = useState(initialPolicySupportRef.current.refundPolicyUrl);
-  const [supportUrl, setSupportUrl] = useState(initialPolicySupportRef.current.supportUrl);
 
   // Estados do modal de adicionar usuário
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -390,90 +356,6 @@ export default function Settings() {
     }
   };
 
-  const validateAndSetLogoFile = (file: File) => {
-    if (!ACCEPTED_LOGO_TYPES.includes(file.type)) {
-      toast.error("Formato de imagem não suportado", {
-        description: "Envie um arquivo PNG, JPG ou SVG.",
-      });
-      return;
-    }
-
-    if (file.size > MAX_LOGO_SIZE_BYTES) {
-      toast.error("O logo deve ter no máximo 2MB.");
-      return;
-    }
-
-    if (logoPreviewUrl) {
-      URL.revokeObjectURL(logoPreviewUrl);
-    }
-
-    const previewUrl = URL.createObjectURL(file);
-    setSelectedLogoFile(file);
-    setLogoPreviewUrl(previewUrl);
-  };
-
-  const handleLogoInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      validateAndSetLogoFile(file);
-    }
-    event.target.value = "";
-  };
-
-  const handleLogoUpload = async (file: File): Promise<string | null> => {
-    try {
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
-      if (authError || !user) {
-        toast.error("Não foi possível autenticar para enviar o logo.");
-        return null;
-      }
-
-      const { data: userRow, error: userError } = await supabase
-        .from("users")
-        .select("client_id")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (userError || !userRow?.client_id) {
-        toast.error("Não foi possível obter a empresa para salvar o logo.");
-        return null;
-      }
-
-      const clientId = userRow.client_id;
-      const ext = file.name.split(".").pop() || "png";
-      const path = `${clientId}/logo-${Date.now()}.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from("logos")
-        .upload(path, file, {
-          contentType: file.type,
-          upsert: true,
-        });
-
-      if (uploadError) {
-        console.error("Erro ao fazer upload do logo:", uploadError);
-        toast.error("Falha ao enviar logo. Tente novamente.");
-        return null;
-      }
-
-      const { data: publicUrlData } = supabase.storage.from("logos").getPublicUrl(path);
-      const publicUrl = publicUrlData?.publicUrl || null;
-      if (!publicUrl) {
-        toast.error("Não foi possível obter a URL pública do logo.");
-        return null;
-      }
-
-      setCurrentLogoUrl(publicUrl);
-      return publicUrl;
-    } catch (err) {
-      console.error("Erro inesperado ao enviar logo:", err);
-      toast.error("Falha ao enviar logo.");
-      return null;
-    }
-  };
 
   // Sincronizar dados do hook com o formulário
   useEffect(() => {
@@ -505,94 +387,6 @@ export default function Settings() {
     };
   }, [fetchActiveSessions]);
 
-  useEffect(() => {
-    const loadBranding = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        const { data: userRow, error: userError } = await supabase
-          .from("users")
-          .select("client_id")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        if (userError || !userRow?.client_id) {
-          console.error("Erro ao buscar client_id para branding:", userError);
-          return;
-        }
-
-        const selectExtended = "brand_color, brand_text_color, support_url, refund_policy_url, logo_url, nome_empresa, sender_from_name, sender_reply_to_email, sender_email_footer";
-        const selectFallback = "nome_empresa";
-
-        const { data, error } = await supabase
-          .from("clients")
-          .select(selectExtended)
-          .eq("id", userRow.client_id)
-          .maybeSingle();
-
-        let brandingData: any = data as any;
-        if (error && error.message?.toLowerCase().includes("brand_color")) {
-          brandingColumnsAvailable.current = false;
-          if (!brandingWarningShown.current) {
-            brandingWarningShown.current = true;
-            toast.warning("Branding columns missing in database", {
-              description: "Run the migration to add brand_color, brand_text_color, support_url, refund_policy_url, logo_url.",
-              duration: 8000,
-            });
-          }
-          const { data: fbData, error: fbError } = await supabase
-            .from("clients")
-            .select(selectFallback)
-            .eq("id", userRow.client_id)
-            .maybeSingle();
-          brandingData = fbData as any;
-          if (fbError) {
-            console.error("Erro ao carregar branding (fallback):", fbError);
-          }
-        } else if (error) {
-          console.error("Erro ao carregar branding:", error);
-          return;
-        }
-
-        if (brandingData?.brand_color) {
-          setBrandColor(brandingData.brand_color);
-          initialBrandColorRef.current = brandingData.brand_color;
-        }
-        if (brandingData?.brand_text_color) {
-          setBrandTextColor(brandingData.brand_text_color);
-          initialBrandTextColorRef.current = brandingData.brand_text_color;
-        }
-        if (brandingData?.support_url) {
-          setSupportUrl(brandingData.support_url);
-          initialPolicySupportRef.current.supportUrl = brandingData.support_url;
-        }
-        if (brandingData?.refund_policy_url) {
-          setRefundPolicyUrl(brandingData.refund_policy_url);
-          initialPolicySupportRef.current.refundPolicyUrl = brandingData.refund_policy_url;
-        }
-        if (brandingData?.logo_url) {
-          setCurrentLogoUrl(brandingData.logo_url);
-        }
-        if (brandingData?.sender_from_name) {
-          setFromName(brandingData.sender_from_name);
-          initialSenderSettingsRef.current.fromName = brandingData.sender_from_name;
-        }
-        if (brandingData?.sender_reply_to_email) {
-          setReplyToEmail(brandingData.sender_reply_to_email);
-          initialSenderSettingsRef.current.replyToEmail = brandingData.sender_reply_to_email;
-        }
-        if (brandingData?.sender_email_footer) {
-          setEmailFooter(brandingData.sender_email_footer);
-          initialSenderSettingsRef.current.emailFooter = brandingData.sender_email_footer;
-        }
-      } catch (err) {
-        console.error("Erro ao carregar branding:", err);
-      }
-    };
-
-    loadBranding();
-  }, []);
 
   const fetch2FAStatus = async () => {
     try {
@@ -879,63 +673,17 @@ export default function Settings() {
         telefone: data.telefone?.trim() || phone || clientData?.telefone || null,
         settings_updated_at: new Date().toISOString(),
       };
-      const effectiveLogoUrl =
-        options?.overrideLogoUrl ??
-        currentLogoUrl ??
-        clientData?.logo_url ??
-        null;
 
-      // Garante que valores vazios sejam salvos como null, não como fallback
-      const updateDataBrand = {
-        brand_color: brandColor && brandColor.trim() !== "" ? brandColor.trim() : null,
-        brand_text_color: brandTextColor && brandTextColor.trim() !== "" ? brandTextColor.trim() : null,
-        support_url: supportUrl && supportUrl.trim() !== "" ? supportUrl.trim() : null,
-        refund_policy_url: refundPolicyUrl && refundPolicyUrl.trim() !== "" ? refundPolicyUrl.trim() : null,
-        logo_url: effectiveLogoUrl,
-      };
-      
-      console.log("💾 Salvando branding:", {
-        brand_color: updateDataBrand.brand_color,
-        brand_text_color: updateDataBrand.brand_text_color,
-        support_url: updateDataBrand.support_url,
-        refund_policy_url: updateDataBrand.refund_policy_url,
-        logo_url: updateDataBrand.logo_url,
-      });
+      const updateData = { ...updateDataBase };
 
-      const updateDataSender = {
-        sender_from_name: fromName || clientData?.sender_from_name || null,
-        sender_reply_to_email: replyToEmail || clientData?.sender_reply_to_email || null,
-        sender_email_footer: emailFooter || clientData?.sender_email_footer || null,
-      };
-
-      const updateData = { ...updateDataBase, ...updateDataBrand, ...updateDataSender };
-
-      const tryUpdate = async (payload: Record<string, any>) =>
-        supabase.from("clients").update(payload).eq("id", targetClientId).select("id");
-
-      let updatedRows;
-      let updateError;
-
-      ({ data: updatedRows, error: updateError } = await tryUpdate(updateData));
-
-      const isMissingBrandColumns =
-        updateError?.message && /brand_color|brand_text_color|support_url|refund_policy_url|logo_url/i.test(updateError.message);
-
-      if (updateError && isMissingBrandColumns) {
-        console.warn("Branding columns not found on update, retrying without them.");
-        brandingColumnsAvailable.current = false;
-        if (!brandingWarningShown.current) {
-          brandingWarningShown.current = true;
-          toast.warning("Branding columns missing in database", {
-            description: "Run the migration to add brand_color, brand_text_color, support_url, refund_policy_url, logo_url.",
-            duration: 8000,
-          });
-        }
-        ({ data: updatedRows, error: updateError } = await tryUpdate(updateDataBase));
-      }
+      const { data: updatedRows, error: updateError } = await supabase
+        .from("clients")
+        .update(updateData)
+        .eq("id", targetClientId)
+        .select("id");
 
       if (updateError) {
-        console.error("❌ Erro ao salvar branding:", updateError);
+        console.error("❌ Erro ao salvar:", updateError);
         throw updateError;
       }
 
@@ -962,56 +710,10 @@ export default function Settings() {
   };
 
   const handleSaveAll = async (data: SettingsFormData) => {
-    setIsSavingSettings(true);
-    try {
-      let uploadedLogoUrl: string | null = null;
-      if (selectedLogoFile) {
-        uploadedLogoUrl = await handleLogoUpload(selectedLogoFile);
-        if (uploadedLogoUrl) {
-          setCurrentLogoUrl(uploadedLogoUrl);
-        }
-      }
-      await handleSaveSettings(data, {
-        skipLoadingState: true,
-        overrideLogoUrl: uploadedLogoUrl,
-      });
-      setSelectedLogoFile(null);
-      // TODO: Persist brandColor when backend is ready
-      initialBrandColorRef.current = brandColor;
-      // TODO: Persist brandTextColor when backend is ready
-      initialBrandTextColorRef.current = brandTextColor;
-      // TODO: Persist sender settings when backend is ready
-      initialSenderSettingsRef.current = {
-        fromName,
-        replyToEmail,
-        emailFooter,
-      };
-      // TODO: Persist policy/support links when backend is ready
-      initialPolicySupportRef.current = {
-        refundPolicyUrl,
-        supportUrl,
-      };
-    } catch (error) {
-      console.error("Erro ao salvar configurações e logo:", error);
-      toast.error("Não foi possível salvar todas as alterações.");
-    } finally {
-      setIsSavingSettings(false);
-    }
+    await handleSaveSettings(data);
   };
 
   const handleDiscardChanges = () => {
-    if (logoPreviewUrl) {
-      URL.revokeObjectURL(logoPreviewUrl);
-    }
-    setLogoPreviewUrl(null);
-    setSelectedLogoFile(null);
-    setBrandColor(initialBrandColorRef.current);
-    setBrandTextColor(initialBrandTextColorRef.current);
-    setFromName(initialSenderSettingsRef.current.fromName);
-    setReplyToEmail(initialSenderSettingsRef.current.replyToEmail);
-    setEmailFooter(initialSenderSettingsRef.current.emailFooter);
-    setRefundPolicyUrl(initialPolicySupportRef.current.refundPolicyUrl);
-    setSupportUrl(initialPolicySupportRef.current.supportUrl);
     form.reset();
     toast.info("Changes discarded");
   };
@@ -1309,18 +1011,6 @@ export default function Settings() {
                 {t("settings.generalTab", { defaultValue: "General" })}
               </TabsTrigger>
               <TabsTrigger
-                value="branding"
-                className="border-b-[3px] border-transparent data-[state=active]:border-[#38CC92] rounded-none bg-transparent pb-3"
-              >
-                {t("settings.brandingTab", { defaultValue: "Branding" })}
-              </TabsTrigger>
-              <TabsTrigger
-                value="evidence"
-                className="border-b-[3px] border-transparent data-[state=active]:border-[#38CC92] rounded-none bg-transparent pb-3"
-              >
-                Evidence Requirements
-              </TabsTrigger>
-              <TabsTrigger
                 value="team"
                 className="border-b-[3px] border-transparent data-[state=active]:border-[#38CC92] rounded-none bg-transparent pb-3"
               >
@@ -1490,241 +1180,6 @@ export default function Settings() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="branding" className="space-y-6 pb-24">
-            {/* Visual Identity */}
-            <Card className="p-0 overflow-hidden">
-              <div className="px-4 py-4 bg-[#F9F9F9] border-b border-[#E5E7EB]">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 border border-[#E5E7EB] rounded-lg bg-white">
-                    <Palette className="h-5 w-5 text-[#9CA3AF]" />
-                  </div>
-                  <div>
-                    <h3 className="text-[15px] font-medium text-[#1A1A1A]">Visual Identity</h3>
-                    <p className="text-[13px] font-normal mt-1 text-muted-foreground">
-                      Configure branding for Automated Emails and the Resolution Hub. Consistent branding builds trust and reduces disputes.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <CardContent className="p-4 space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div
-                    className="relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-[#E5E7EB] bg-white px-6 py-8 text-center transition hover:border-[#19976F]/70 hover:bg-[#F9FDFB] cursor-pointer"
-                    onDragOver={(event) => event.preventDefault()}
-                    onDrop={(event) => {
-                      event.preventDefault();
-                      const file = event.dataTransfer.files?.[0];
-                      if (file) {
-                        validateAndSetLogoFile(file);
-                      }
-                    }}
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept={ACCEPTED_LOGO_TYPES.join(",")}
-                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-                      onChange={handleLogoInputChange}
-                    />
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="flex items-center justify-center h-12 w-12 rounded-full bg-[#F3F4F6]">
-                        <UploadCloud className="h-6 w-6 text-[#6B7280]" />
-                      </div>
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium text-[#1F2937]">
-                          Drag & drop your logo here or click to browse
-                        </p>
-                        <p className="text-xs text-[#6B7280]">PNG, JPG or SVG • Max 2MB</p>
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-4">
-                      Recommended logo size: 240×80px (PNG, JPG, or SVG).
-                    </p>
-                  </div>
-
-                  <div className="space-y-3 rounded-xl border border-[#E5E7EB] bg-white p-4 shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-1">
-                        <Label className="text-sm font-medium text-[#1F2937]">Accent Color</Label>
-                        <p className="text-xs text-muted-foreground">
-                            This color drives your CTAs across Automated Emails and the Resolution Hub.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-3 items-center">
-                      <input
-                        type="color"
-                        value={brandColor}
-                        onChange={(e) => setBrandColor(e.target.value)}
-                        className="h-12 w-12 rounded border border-gray-200 p-1 shadow-sm"
-                        aria-label="Select brand color"
-                      />
-                      <Input
-                        value={brandColor}
-                        onChange={(e) => setBrandColor(e.target.value)}
-                        className="max-w-xs"
-                        aria-label="Brand color HEX code"
-                      />
-                    </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium text-[#1F2937]">Text Color</Label>
-                        <div className="flex flex-wrap gap-3 items-center">
-                          <input
-                            type="color"
-                            value={brandTextColor}
-                            onChange={(e) => setBrandTextColor(e.target.value)}
-                            className="h-12 w-12 rounded border border-gray-200 p-1 shadow-sm"
-                            aria-label="Select brand text color"
-                          />
-                          <Input
-                            value={brandTextColor}
-                            onChange={(e) => setBrandTextColor(e.target.value)}
-                            className="max-w-xs"
-                            aria-label="Brand text color HEX code"
-                          />
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Adjust link/button text color to ensure readability on your brand background.
-                        </p>
-                      </div>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-semibold text-[#1F2937]">Customer View Preview</h4>
-                  </div>
-                  <div className="w-full rounded-xl bg-gray-100 border border-gray-200 p-5 shadow-sm">
-                    <div className="flex flex-col gap-4">
-                      <div className="flex items-center gap-3">
-                        {logoPreviewUrl || currentLogoUrl ? (
-                          <img
-                            src={logoPreviewUrl || currentLogoUrl || ""}
-                            alt="Logo preview"
-                            className="h-12 w-32 object-contain rounded-md bg-white border border-gray-200"
-                          />
-                        ) : (
-                          <div className="h-12 w-32 rounded-md bg-gray-200 border border-gray-300" />
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <div className="h-4 w-3/4 rounded bg-gray-200" />
-                        <div className="h-4 w-2/3 rounded bg-gray-200" />
-                        <div className="h-4 w-1/2 rounded bg-gray-200" />
-                      </div>
-                      <div className="space-y-1">
-                        <button
-                          type="button"
-                          className="px-4 py-2 text-sm font-medium rounded-md shadow-sm text-white transition"
-                          style={{ backgroundColor: brandColor || "#000000", color: brandTextColor || "#FFFFFF" }}
-                        >
-                          Need help with your order?
-                        </button>
-                        <p className="text-xs text-gray-600">Exchanges, returns, and support</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Sender Settings */}
-            <Card className="p-0 overflow-hidden">
-              <div className="px-4 py-4 bg-[#F9F9F9] border-b border-[#E5E7EB]">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 border border-[#E5E7EB] rounded-lg bg-white">
-                    <Send className="h-5 w-5 text-[#9CA3AF]" />
-                  </div>
-                  <div>
-                    <h3 className="text-[15px] font-medium text-[#1A1A1A]">Sender Settings</h3>
-                    <p className="text-[13px] font-normal mt-1 text-muted-foreground">
-                      Define sender details for Automated Emails and the Resolution Hub to keep messages trusted and recognizable.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <CardContent className="p-4 space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-[#1F2937]">From Name</Label>
-                  <Input
-                    value={fromName}
-                    onChange={(e) => setFromName(e.target.value)}
-                    placeholder='E.g., "My Store Team"'
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-[#1F2937]">Reply-To Email</Label>
-                  <Input
-                    type="email"
-                    value={replyToEmail}
-                    onChange={(e) => setReplyToEmail(e.target.value)}
-                    placeholder="support@mystore.com"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-[#1F2937]">Email Footer</Label>
-                  <Textarea
-                    value={emailFooter}
-                    onChange={(e) => setEmailFooter(e.target.value)}
-                    placeholder="Address, social links, or legal text."
-                    className="min-h-[110px]"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Policy & Support */}
-            <Card className="p-0 overflow-hidden">
-              <div className="px-4 py-4 bg-[#F9F9F9] border-b border-[#E5E7EB]">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 border border-[#E5E7EB] rounded-lg bg-white">
-                    <Shield className="h-5 w-5 text-[#9CA3AF]" />
-                  </div>
-                  <div>
-                    <h3 className="text-[15px] font-medium text-[#1A1A1A]">Policy & Support</h3>
-                    <p className="text-[13px] font-normal mt-1 text-muted-foreground">
-                      Key links shown in the Resolution Hub footer to build trust and strengthen dispute outcomes.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <CardContent className="p-4 space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-[#1F2937]">Refund Policy URL</Label>
-                  <Input
-                    type="url"
-                    value={refundPolicyUrl}
-                    onChange={(e) => setRefundPolicyUrl(e.target.value)}
-                    placeholder="https://yourstore.com/refund-policy"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Link to your store's refund policy. Essential for dispute evidence.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-[#1F2937]">Support / Contact URL</Label>
-                  <Input
-                    type="url"
-                    value={supportUrl}
-                    onChange={(e) => setSupportUrl(e.target.value)}
-                    placeholder="https://yourstore.com/support"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Where should customers go if they decline the offer? (e.g., Help Center link, WhatsApp link, or Contact Page).
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="evidence" className="space-y-6 pb-24">
-            <EvidenceFieldEditor />
-          </TabsContent>
 
           <TabsContent value="team" className="space-y-6 pb-24">
             {/* Team Management Section */}
@@ -2562,15 +2017,7 @@ export default function Settings() {
       {/* Save Bar - rodapé fixo enterprise clean */}
       <SaveBar
         isOpen={
-          form.formState.isDirty ||
-          !!selectedLogoFile ||
-          brandColor !== initialBrandColorRef.current ||
-          brandTextColor !== initialBrandTextColorRef.current ||
-          fromName !== initialSenderSettingsRef.current.fromName ||
-          replyToEmail !== initialSenderSettingsRef.current.replyToEmail ||
-          emailFooter !== initialSenderSettingsRef.current.emailFooter ||
-          refundPolicyUrl !== initialPolicySupportRef.current.refundPolicyUrl ||
-          supportUrl !== initialPolicySupportRef.current.supportUrl
+          form.formState.isDirty
         }
         isLoading={isSavingSettings}
         onSave={form.handleSubmit(handleSaveAll)}

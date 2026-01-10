@@ -18,6 +18,7 @@ import {
   Eye,
   TrendingUp,
   Search,
+  Settings,
 } from "lucide-react";
 import { useState } from "react";
 import {
@@ -255,10 +256,20 @@ export default function RefundRequest() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <PageHeader 
-          title={t("refundRequestDashboard.title")} 
-          subtitle={t("refundRequestDashboard.subtitle")} 
-        />
+        <div className="flex items-center justify-between">
+          <PageHeader 
+            title={t("refundRequestDashboard.title")} 
+            subtitle={t("refundRequestDashboard.subtitle")} 
+          />
+          <Button
+            variant="outline"
+            onClick={() => navigate("/refund-request/settings")}
+            className="shrink-0"
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            Settings
+          </Button>
+        </div>
 
         {/* Status Overview Cards */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
