@@ -1280,29 +1280,29 @@ const ResolutionHub = () => {
         console.log("🔍 Modo de busca (via CHARGEMIND_DATA):", useMockData ? "MOCK DATA ✅" : "REAL DATA 🌐");
         console.log("   →", useMockData ? "Test Mode (Mock Data) ativo!" : "Production Mode (Real Data) ativo!");
       } else {
-        // 3. Se não tem CHARGEMIND_DATA, verifica localStorage (admin)
-        const stored = localStorage.getItem("chargemind_use_mock_data");
-        console.log("📦 localStorage 'chargemind_use_mock_data':", stored);
-        if (stored !== null) {
-          useMockData = JSON.parse(stored);
-          console.log("🔍 Modo de busca (via localStorage/admin):", useMockData ? "MOCK DATA ✅" : "REAL DATA 🌐");
-          console.log("   →", useMockData ? "Test Mode (Mock Data) ativo!" : "Production Mode (Real Data) ativo!");
+        // 3. Verifica se estamos em ambiente de desenvolvimento
+        const hostname = window.location.hostname;
+        const isDev = hostname === 'localhost' || 
+                      hostname.includes('lovableproject.com') ||
+                      hostname.includes('127.0.0.1');
+        
+        if (isDev) {
+          // Em desenvolvimento: SEMPRE mock por default (ignora localStorage)
+          useMockData = true;
+          console.log("🔍 Modo de busca (default dev): MOCK DATA ✅");
+          console.log("   → Ambiente de desenvolvimento detectado - usando Mock Data automaticamente");
+          console.log("   → localStorage ignorado em ambiente de desenvolvimento");
         } else {
-          // 4. Verifica se estamos em ambiente de desenvolvimento
-          const hostname = window.location.hostname;
-          const isDev = hostname === 'localhost' || 
-                        hostname.includes('lovableproject.com') ||
-                        hostname.includes('127.0.0.1');
-          
-          if (isDev) {
-            // Em desenvolvimento: default = mock para facilitar testes
-            useMockData = true;
-            console.log("🔍 Modo de busca (default dev): MOCK DATA ✅");
-            console.log("   → Ambiente de desenvolvimento detectado - usando Mock Data automaticamente");
+          // 4. Em produção: verifica localStorage ou usa default false
+          const stored = localStorage.getItem("chargemind_use_mock_data");
+          console.log("📦 localStorage 'chargemind_use_mock_data':", stored);
+          if (stored !== null) {
+            useMockData = JSON.parse(stored);
+            console.log("🔍 Modo de busca (via localStorage/admin):", useMockData ? "MOCK DATA ✅" : "REAL DATA 🌐");
+            console.log("   →", useMockData ? "Test Mode (Mock Data) ativo!" : "Production Mode (Real Data) ativo!");
           } else {
-            // Produção (Shopify): default = real data
             useMockData = false;
-            console.log("🔍 Modo de busca (default): REAL DATA 🌐");
+            console.log("🔍 Modo de busca (default prod): REAL DATA 🌐");
             console.log("   → Production Mode (Real Data) ativo!");
           }
         }
