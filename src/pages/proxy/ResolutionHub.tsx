@@ -1030,11 +1030,20 @@ const ResolutionHub = () => {
       
       // Tenta primeiro do CHARGEMIND_DATA
       const data = (window as Window & { CHARGEMIND_DATA?: any }).CHARGEMIND_DATA;
+      
+      console.log("🔍 fetchEvidenceFields - CHARGEMIND_DATA completo:", JSON.stringify(data, null, 2));
+      console.log("🔍 fetchEvidenceFields - data?.client_id:", data?.client_id);
+      console.log("🔍 fetchEvidenceFields - data?.branding?.client_id:", data?.branding?.client_id);
+      
       if (data?.client_id) {
         clientId = data.client_id;
+        console.log("✅ client_id encontrado no nível raiz:", clientId);
       } else if (data?.branding?.client_id) {
         clientId = data.branding.client_id;
+        console.log("✅ client_id encontrado em branding:", clientId);
       }
+      
+      console.log("🔍 fetchEvidenceFields - clientId final:", clientId);
       
       // Se não encontrou, tenta pelo auth
       if (!clientId) {
