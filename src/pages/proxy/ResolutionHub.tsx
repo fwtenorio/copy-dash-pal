@@ -18,6 +18,7 @@ import {
   Store,
   CreditCard,
   ChevronRight,
+  ChevronDown,
   Upload,
   Info,
   XCircle,
@@ -914,6 +915,189 @@ const ProductImage = ({ src, alt }: { src?: string; alt: string }) => {
       className="w-16 h-16 rounded-lg object-cover border"
       onError={() => setImageError(true)}
     />
+  );
+};
+
+// ============================================================================
+// FAQ SECTION COMPONENT
+// ============================================================================
+const FAQ_DATA = {
+  refund: [
+    {
+      question: "When will I receive my refund?",
+      answer: "Within 10 business days, your bank may perform a small verification transaction to confirm your account details. Afterward, the full refund will be credited within 30 days. Depending on your bank or payment provider, it may take a few additional days for the refund to appear on your statement."
+    },
+    {
+      question: "Where will the refund appear on my statement?",
+      answer: "It may appear as an adjustment to the original charge or as a separate credit entry."
+    },
+    {
+      question: "Why can't I see my refund yet?",
+      answer: "Each bank and card network has its own processing times. For credit cards, the refund may only be visible in the next billing cycle."
+    },
+    {
+      question: "Is the refund automatic? Do I need to take any action?",
+      answer: "No action is required. Once confirmed, the refund is automatically sent to the card originally used for the purchase."
+    },
+    {
+      question: "Can I receive the refund on a different card or bank account?",
+      answer: "No. For security reasons, refunds are always issued to the same card used for payment."
+    },
+    {
+      question: "What happens if my card has expired or been canceled?",
+      answer: "Even if your card has expired, the refund will be credited to the account linked to that card. In some cases, your bank may transfer the credit to a new card or directly to your account."
+    },
+    {
+      question: "Does the refund include taxes and fees?",
+      answer: "Yes. We refund the total amount paid, including taxes and fees, unless otherwise specified in promotional policies."
+    },
+    {
+      question: "Can I track the status of my refund?",
+      answer: "Once we have processed it, tracking depends entirely on your card issuer. If the maximum timeframe has passed, we recommend contacting your bank directly."
+    }
+  ],
+  exchange: [
+    {
+      question: "Can I exchange for another model or color?",
+      answer: "No, exchanges are only available for different sizes of the same product. We do not currently offer exchanges for different models, colors, or styles."
+    },
+    {
+      question: "What sizes are available for exchange?",
+      answer: "Available exchange sizes are S, M, L, XL, 2XL, and 3XL, subject to stock availability. Size availability may vary depending on the specific product."
+    },
+    {
+      question: "How long does it take to receive the exchanged item?",
+      answer: "Exchange processing and shipping may take up to 30 business days, depending on logistics and stock availability. You will receive tracking information as soon as your new item is shipped."
+    },
+    {
+      question: "Do I need to return the original item before receiving the new one?",
+      answer: "This depends on each individual case. If you are not asked to return the original item during the exchange request process, you may keep the product and receive a new one. Specific instructions based on your situation will be provided with your exchange confirmation."
+    }
+  ]
+};
+
+const FAQSection = () => {
+  const [activeTab, setActiveTab] = useState<'refund' | 'exchange'>('refund');
+  const [openItem, setOpenItem] = useState<number | null>(null);
+
+  const currentFAQ = activeTab === 'refund' ? FAQ_DATA.refund : FAQ_DATA.exchange;
+
+  const toggleItem = (index: number) => {
+    setOpenItem(openItem === index ? null : index);
+  };
+
+  return (
+    <div style={{ 
+      marginTop: '48px',
+      borderRadius: '16px',
+      border: '1px solid #E5E7EB',
+      backgroundColor: '#FFFFFF',
+      padding: '32px',
+      maxWidth: '100%'
+    }}>
+      {/* Title */}
+      <h2 style={{ 
+        fontSize: '24px', 
+        fontWeight: '700', 
+        color: '#111827',
+        textAlign: 'center',
+        marginBottom: '24px'
+      }}>
+        Frequently Asked Questions
+      </h2>
+
+      {/* Tab Buttons */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        gap: '32px',
+        marginBottom: '24px'
+      }}>
+        <button
+          onClick={() => { setActiveTab('refund'); setOpenItem(null); }}
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: '8px 0',
+            fontSize: '16px',
+            fontWeight: activeTab === 'refund' ? '600' : '400',
+            color: activeTab === 'refund' ? '#111827' : '#9CA3AF',
+            borderBottom: activeTab === 'refund' ? '2px solid #111827' : '2px solid transparent',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          Refund Questions
+        </button>
+        <button
+          onClick={() => { setActiveTab('exchange'); setOpenItem(null); }}
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: '8px 0',
+            fontSize: '16px',
+            fontWeight: activeTab === 'exchange' ? '600' : '400',
+            color: activeTab === 'exchange' ? '#111827' : '#9CA3AF',
+            borderBottom: activeTab === 'exchange' ? '2px solid #111827' : '2px solid transparent',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          Exchange Questions
+        </button>
+      </div>
+
+      {/* FAQ Items */}
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {currentFAQ.map((item, index) => (
+          <div key={index} style={{ borderTop: index === 0 ? 'none' : '1px solid #E5E7EB' }}>
+            <button
+              onClick={() => toggleItem(index)}
+              style={{
+                width: '100%',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '20px 0',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                textAlign: 'left'
+              }}
+            >
+              <span style={{ 
+                fontSize: '16px', 
+                fontWeight: '500', 
+                color: '#111827',
+                paddingRight: '16px'
+              }}>
+                {item.question}
+              </span>
+              <ChevronDown 
+                style={{ 
+                  width: '20px', 
+                  height: '20px', 
+                  color: '#6B7280',
+                  flexShrink: 0,
+                  transform: openItem === index ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.2s ease'
+                }} 
+              />
+            </button>
+            {openItem === index && (
+              <div style={{ 
+                paddingBottom: '20px',
+                fontSize: '15px',
+                lineHeight: '1.6',
+                color: '#4B5563'
+              }}>
+                {item.answer}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };
 
@@ -4309,6 +4493,9 @@ const ResolutionHub = () => {
             Powered by <img src="https://xieephvojphtjayjoxbc.supabase.co/storage/v1/object/public/assets/proxy/logo.png" alt="Chargemind" style={{ height: '13px', opacity: 0.7 }} />
           </p>
         </div>
+
+        {/* FAQ Section */}
+        <FAQSection />
       </div>
       
       <Sonner 
