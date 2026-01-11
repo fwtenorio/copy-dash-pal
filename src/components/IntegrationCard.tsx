@@ -65,7 +65,8 @@ export function IntegrationCard({
               alt={`${name} integration icon`}
               className="h-10 w-10 object-center"
               loading="eager"
-              fetchPriority="high"
+              // @ts-ignore - fetchpriority is valid HTML attribute
+              fetchpriority="high"
             />
           </div>
           {(hasSettings || comingSoon) && (
