@@ -48,15 +48,20 @@
       const mockParam = new URLSearchParams(window.location.search).get('mock');
       const useMockData = mockParam !== null ? mockParam === 'true' : true; // Default: true em desenvolvimento
       
+      // Tenta buscar client_id do usuário logado para testes
+      // Em produção, isso vem da Edge Function
       window.CHARGEMIND_DATA = {
         shop: "loja-teste.myshopify.com",
+        // client_id será preenchido dinamicamente se o usuário estiver logado
+        client_id: null, // Será atualizado pelo ResolutionHub se autenticado
         branding: {
           // Deixe vazio para simular busca do Supabase em localhost
           // Ou preencha com dados reais para testar branding específico
           brand_color: null,
           brand_text_color: null,
           logo_url: null,
-          heading: null
+          heading: null,
+          client_id: null // Também aqui para compatibilidade
         },
         useMockData: useMockData
       };
