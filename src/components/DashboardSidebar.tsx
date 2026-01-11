@@ -241,7 +241,8 @@ export function DashboardSidebar() {
               alt="Chargemind logo"
               className="h-full w-auto object-left"
               loading="eager"
-              fetchPriority="high"
+              // @ts-ignore - fetchpriority is valid HTML attribute
+              fetchpriority="high"
             />
           </div>
 
@@ -256,7 +257,8 @@ export function DashboardSidebar() {
               alt="Chargemind mini logo"
               className="h-8 w-8"
               loading="eager"
-              fetchPriority="high"
+              // @ts-ignore - fetchpriority is valid HTML attribute
+              fetchpriority="high"
             />
           </div>
 
