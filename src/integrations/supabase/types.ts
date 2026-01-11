@@ -28,6 +28,7 @@ export type Database = {
           brand_text_color: string | null
           created_at: string
           email: string
+          faq_data: Json | null
           id: string
           klarna_api_key: string | null
           klarna_connected_at: string | null
@@ -79,6 +80,7 @@ export type Database = {
           brand_text_color?: string | null
           created_at?: string
           email: string
+          faq_data?: Json | null
           id: string
           klarna_api_key?: string | null
           klarna_connected_at?: string | null
@@ -130,6 +132,7 @@ export type Database = {
           brand_text_color?: string | null
           created_at?: string
           email?: string
+          faq_data?: Json | null
           id?: string
           klarna_api_key?: string | null
           klarna_connected_at?: string | null

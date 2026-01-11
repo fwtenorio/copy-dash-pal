@@ -33,6 +33,7 @@ import { supabase } from "@/integrations/supabase/safeClient";
 import { toast } from "sonner";
 import { SaveBar } from "@/components/SaveBar";
 import { EvidenceFieldEditor } from "@/components/EvidenceFieldEditor";
+import { FAQEditor } from "@/components/FAQEditor";
 import {
   Table,
   TableBody,
@@ -563,6 +564,12 @@ export default function RefundRequest() {
                 className="border-b-[3px] border-transparent data-[state=active]:border-primary rounded-none bg-transparent pb-3"
               >
                 Evidence Requirements
+              </TabsTrigger>
+              <TabsTrigger
+                value="faq"
+                className="border-b-[3px] border-transparent data-[state=active]:border-primary rounded-none bg-transparent pb-3"
+              >
+                FAQ
               </TabsTrigger>
             </TabsList>
           </div>
@@ -1168,6 +1175,11 @@ export default function RefundRequest() {
           {/* Evidence Requirements Tab */}
           <TabsContent value="evidence" className="space-y-6 pb-24">
             <EvidenceFieldEditor />
+          </TabsContent>
+
+          {/* FAQ Tab */}
+          <TabsContent value="faq" className="space-y-6 pb-24">
+            <FAQEditor />
           </TabsContent>
         </Tabs>
       </div>

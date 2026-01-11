@@ -130,12 +130,14 @@ export function FAQEditor() {
 
       const { data: clientData } = await supabase
         .from("clients")
-        .select("faq_data")
+        .select("*")
         .eq("id", userRow.client_id)
         .maybeSingle();
 
-      if (clientData?.faq_data) {
-        const parsedData = clientData.faq_data as FAQData;
+      // Cast to access faq_data since types may not be regenerated yet
+      const faqDataFromDb = (clientData as any)?.faq_data;
+      if (faqDataFromDb) {
+        const parsedData = faqDataFromDb as FAQData;
         setFaqData(parsedData);
         setInitialFaqData(parsedData);
       }
@@ -160,9 +162,10 @@ export function FAQEditor() {
 
       if (!userRow?.client_id) throw new Error("Client not found");
 
+      // Use rpc or raw update to bypass type checking for new column
       const { error } = await supabase
         .from("clients")
-        .update({ faq_data: faqData as any })
+        .update({ faq_data: faqData } as any)
         .eq("id", userRow.client_id);
 
       if (error) throw error;
